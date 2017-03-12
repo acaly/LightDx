@@ -146,7 +146,6 @@ namespace LightDX
 
         private void CreateDepthStencil()
         {
-            IntPtr depthTex, depthView;
             Texture2DDescription depth = new Texture2DDescription
             {
                 Width = (uint)_Width,
@@ -161,12 +160,12 @@ namespace LightDX
                 CPUAccessFlags = 0,
                 MiscFlags = 0,
             };
-            Device.CreateTexture2D(_Device, ref depth, IntPtr.Zero, out depthTex).Check();
-            using (new ComScopeGuard(depthTex))
+            using (ComScopeGuard depthTex = new ComScopeGuard(), depthView = new ComScopeGuard())
             {
-                Device.CreateDepthStencilView(_Device, depthTex, IntPtr.Zero, out depthView).Check();
+                Device.CreateTexture2D(_Device, ref depth, IntPtr.Zero, out depthTex.Ptr).Check();
+                Device.CreateDepthStencilView(_Device, depthTex.Ptr, IntPtr.Zero, out depthView.Ptr).Check();
+                this._DepthStencilView = depthView.Move();
             }
-            this._DepthStencilView = depthView;
         }
 
         private IntPtr GetDefaultDepthStencil()
