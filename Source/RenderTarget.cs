@@ -28,8 +28,8 @@ namespace LightDX
             _Device = device;
             device.AddComponent(this);
 
-            _TargetView = targetView.Select(v => v.AddRef()).ToArray();
-            _DepthStencil = depthStencil.AddRef();
+            _TargetView = targetView;
+            _DepthStencil = depthStencil;
         }
 
         public RenderTarget Clone()

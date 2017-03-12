@@ -186,8 +186,8 @@ namespace LightDX
 
         public RenderTarget CreateDefaultTarget(bool useDepthStencil)
         {
-            return new RenderTarget(this, new[] { _DefaultRenderView },
-                useDepthStencil ? GetDefaultDepthStencil() : IntPtr.Zero);
+            return new RenderTarget(this, new[] { _DefaultRenderView.AddRef() },
+                useDepthStencil ? GetDefaultDepthStencil().AddRef() : IntPtr.Zero);
         }
 
         public Pipeline CompilePipeline(string shaderCode, bool useGeometryShader, InputTopology topology)
