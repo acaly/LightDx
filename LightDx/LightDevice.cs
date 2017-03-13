@@ -1,6 +1,7 @@
 ﻿using LightDx.Natives;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -263,6 +264,56 @@ namespace LightDx
                 }
                 return blob.Move();
             }
+        }
+
+        public Texture2D CreateTexture2D(Bitmap bitmap)
+        {
+            using (ComScopeGuard tex = new ComScopeGuard(), view = new ComScopeGuard())
+            {
+                tex.Ptr = InternalCreateTexture2D(bitmap);
+                Device.CreateShaderResourceView(_Device, tex.Ptr, IntPtr.Zero, out view.Ptr).Check();
+                return new Texture2D(this, tex.Move(), view.Move());
+            }
+        }
+
+        private unsafe IntPtr InternalCreateTexture2D(Bitmap bitmap)
+        {
+            var rect = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
+
+            if (bitmap.PixelFormat != System.Drawing.Imaging.PixelFormat.Format32bppArgb)
+            {
+                using (var b2 = bitmap.Clone(rect, System.Drawing.Imaging.PixelFormat.Format32bppArgb))
+                {
+                    return InternalCreateTexture2D(b2);
+                }
+            }
+
+            Texture2DDescription t2d = new Texture2DDescription
+            {
+                Width = (uint)bitmap.Width,
+                Height = (uint)bitmap.Height,
+                MipLevels = 1,
+                ArraySize = 1,
+                Format = PixelFormat.DXGI_FORMAT_B8G8R8A8_UNORM,
+                SampleCount = 1,
+                SampleQuality = 0,
+                Usage = 1,
+                BindFlags = 8, //ShaderResource
+                CPUAccessFlags = 0,
+                MiscFlags = 0,
+            };
+            var locked = bitmap.LockBits(rect, System.Drawing.Imaging.ImageLockMode.ReadOnly,
+                System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            SubresourceData data = new SubresourceData
+            {
+                pSysMem = locked.Scan0,
+                SysMemPitch = (uint)locked.Stride,
+            };
+
+            IntPtr tex;
+            Device.CreateTexture2D(_Device, ref t2d, new IntPtr(&data), out tex).Check();
+
+            return tex;
         }
 
         public void Present(bool vsync = false)

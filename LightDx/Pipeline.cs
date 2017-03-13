@@ -34,6 +34,7 @@ namespace LightDx
         private Viewport _Viewport;
 
         private Dictionary<int, AbstractPipelineConstant> _Constants = new Dictionary<int, AbstractPipelineConstant>();
+        private Dictionary<int, Texture2D> _Resources = new Dictionary<int, Texture2D>();
 
         internal Pipeline(LightDevice device, IntPtr v, IntPtr g, IntPtr p, IntPtr sign, Viewport vp, InputTopology topology)
         {
@@ -106,6 +107,18 @@ namespace LightDx
             }
         }
 
+        public void SetResource(int slot, Texture2D tex)
+        {
+            if (tex == null)
+            {
+                _Resources.Remove(slot);
+            }
+            else
+            {
+                _Resources[slot] = tex;
+            }
+        }
+
         public unsafe void Apply()
         {
             if (_Disposed)
@@ -121,6 +134,11 @@ namespace LightDx
                 DeviceContext.RSSetViewports(_Device.ContextPtr, 1, ptr);
             }
             //TODO setup constant buffer
+            foreach (var res in _Resources)
+            {
+                IntPtr view = res.Value.ViewPtr;
+                DeviceContext.PSSetShaderResources(_Device.ContextPtr, (uint)res.Key, 1, ref view);
+            }
         }
     }
 }
