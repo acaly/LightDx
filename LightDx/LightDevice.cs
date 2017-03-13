@@ -1,6 +1,7 @@
-﻿using LightDX.Natives;
+﻿using LightDx.Natives;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security;
@@ -9,7 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace LightDX
+namespace LightDx
 {
     public class LightDevice : IDisposable
     {
@@ -30,6 +31,8 @@ namespace LightDX
         private IntPtr _DepthStencilView;
 
         private List<WeakReference<IDisposable>> _Components = new List<WeakReference<IDisposable>>();
+
+        private volatile MultithreadLoop _CurrentLoop;
 
         private LightDevice()
         {
@@ -189,9 +192,16 @@ namespace LightDX
                 useDepthStencil ? GetDefaultDepthStencil().AddRef() : IntPtr.Zero);
         }
 
-        public Pipeline CompilePipeline(string shaderCode, bool useGeometryShader, InputTopology topology)
+        public Pipeline CompilePipeline(string shaderCodeString, bool useGeometryShader, InputTopology topology)
         {
-            return CompilePipeline(Encoding.ASCII.GetBytes(shaderCode), useGeometryShader, topology);
+            return CompilePipeline(Encoding.ASCII.GetBytes(shaderCodeString), useGeometryShader, topology);
+        }
+
+        public Pipeline CompilePipeline(Stream shaderCodeStream, bool useGeometryShader, InputTopology topology)
+        {
+            byte[] shaderCode = new byte[shaderCodeStream.Length];
+            shaderCodeStream.Read(shaderCode, 0, shaderCode.Length);
+            return CompilePipeline(shaderCode, useGeometryShader, topology);
         }
 
         public unsafe Pipeline CompilePipeline(byte[] shaderCode, bool useGeometryShader, InputTopology topology)
@@ -271,7 +281,7 @@ namespace LightDX
 
         #region NativeMessage
 
-        public struct NativeMessage
+        private struct NativeMessage
         {
             public IntPtr handle;
             public uint msg;
@@ -284,19 +294,19 @@ namespace LightDX
 
         [SuppressUnmanagedCodeSecurity]
         [DllImport("user32.dll")]
-        public static extern int PeekMessage(out NativeMessage lpMsg, IntPtr hWnd, int wMsgFilterMin, int wMsgFilterMax, int wRemoveMsg);
+        private static extern int PeekMessage(out NativeMessage lpMsg, IntPtr hWnd, int wMsgFilterMin, int wMsgFilterMax, int wRemoveMsg);
 
         [SuppressUnmanagedCodeSecurity]
         [DllImport("user32.dll")]
-        public static extern int GetMessage(out NativeMessage lpMsg, IntPtr hWnd, int wMsgFilterMin, int wMsgFilterMax);
+        private static extern int GetMessage(out NativeMessage lpMsg, IntPtr hWnd, int wMsgFilterMin, int wMsgFilterMax);
 
         [SuppressUnmanagedCodeSecurity]
         [DllImport("user32.dll")]
-        public static extern int TranslateMessage(ref NativeMessage lpMsg);
+        private static extern int TranslateMessage(ref NativeMessage lpMsg);
 
         [SuppressUnmanagedCodeSecurity]
         [DllImport("user32.dll")]
-        public static extern int DispatchMessage(ref NativeMessage lpMsg);
+        private static extern int DispatchMessage(ref NativeMessage lpMsg);
 
         private static void InternalDoEvents()
         {
@@ -323,17 +333,11 @@ namespace LightDX
         }
         #endregion
 
-        public void RunLoop(Func<bool> frame)
-        {
-            while (frame())
-            {
-                DoEvents();
-            }
-        }
-
         public void RunLoop(Action frame)
         {
-            while (_Ctrl.Visible)
+            MultithreadLoop loop = new MultithreadLoop();
+            _CurrentLoop = loop;
+            while (_CurrentLoop == loop && !loop.Stop && _Ctrl.Visible)
             {
                 frame();
                 DoEvents();
@@ -343,9 +347,10 @@ namespace LightDX
         public void RunMultithreadLoop(Action frame)
         {
             MultithreadLoop loop = new MultithreadLoop();
+            _CurrentLoop = loop;
             var th = new Thread(delegate()
             {
-                while (!loop.Stop)
+                while (_CurrentLoop == loop && !loop.Stop)
                 {
                     frame();
                 }
@@ -358,6 +363,16 @@ namespace LightDX
             }
             loop.Stop = true;
             th.Join();
+        }
+
+        public void StopLoop()
+        {
+            var loop = _CurrentLoop;
+            if (loop == null)
+            {
+                return;
+            }
+            loop.Stop = true;
         }
     }
 }

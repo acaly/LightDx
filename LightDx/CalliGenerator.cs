@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LightDX
+namespace LightDx
 {
     //This class is modified version of http://rogue-modron.blogspot.ca/2011/11/invoking-native.html
     class CalliGenerator

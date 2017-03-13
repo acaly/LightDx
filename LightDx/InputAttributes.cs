@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LightDX.InputAttributes
+namespace LightDx.InputAttributes
 {
     public abstract class InputAttribute : Attribute
     {

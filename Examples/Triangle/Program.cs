@@ -1,53 +1,17 @@
-﻿using LightDX.InputAttributes;
+﻿using LightDx;
+using LightDx.InputAttributes;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using System.Text;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace LightDX
+namespace Triangle
 {
-    class Program
+    static class Program
     {
-        #region Shader Code
-
-        public static readonly string Shader = @"
-struct VS_IN
-{
-	float4 pos : POSITION;
-	float4 col : COLOR;
-};
-
-struct PS_IN
-{
-	float4 pos : SV_POSITION;
-	float4 col : COLOR;
-};
-
-//Texture2D faceTexture : register(t0);
-//SamplerState MeshTextureSampler : register(s0);
-
-PS_IN VS( VS_IN input )
-{
-	PS_IN output = (PS_IN)0;
-	
-	output.pos = input.pos;
-	output.col = input.col;
-	
-	return output;
-}
-
-float4 PS( PS_IN input ) : SV_Target
-{
-    //float4 c1 = faceTexture.Sample(MeshTextureSampler, input.col.xy);
-	return input.col;
-}
-";
-
-        #endregion
-
         private struct Vertex
         {
             [Position]
@@ -56,8 +20,12 @@ float4 PS( PS_IN input ) : SV_Target
             public Float4 Color;
         }
 
-        private static void Main()
+        [STAThread]
+        static void Main()
         {
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+
             var form = new Form();
             form.ClientSize = new Size(800, 600);
 
@@ -66,7 +34,11 @@ float4 PS( PS_IN input ) : SV_Target
                 var target = device.CreateDefaultTarget(false);
                 target.Apply();
 
-                var pipeline = device.CompilePipeline(Shader, false, InputTopology.Triangle);
+                Pipeline pipeline;
+                using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Triangle.Shader.fx"))
+                {
+                    pipeline = device.CompilePipeline(stream, false, InputTopology.Triangle);
+                }
                 pipeline.Apply();
 
                 var input = pipeline.CreateInputDataProcessor<Vertex>();

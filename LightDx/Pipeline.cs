@@ -1,11 +1,11 @@
-﻿using LightDX.Natives;
+﻿using LightDx.Natives;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LightDX
+namespace LightDx
 {
     public enum InputTopology
     {
