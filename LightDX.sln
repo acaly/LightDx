@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Triangle", "Examples\Triang
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{8A9515FE-6CCF-4B80-9A37-87C2C3583424}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TextureTriangle", "Examples\TextureTriangle\TextureTriangle.csproj", "{69D3CBDE-6740-4199-96EC-622240537C8A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,11 +25,16 @@ Global
 		{B35FE686-B955-4C7A-AA7F-BA1FF5185674}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B35FE686-B955-4C7A-AA7F-BA1FF5185674}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B35FE686-B955-4C7A-AA7F-BA1FF5185674}.Release|Any CPU.Build.0 = Release|Any CPU
+		{69D3CBDE-6740-4199-96EC-622240537C8A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{69D3CBDE-6740-4199-96EC-622240537C8A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{69D3CBDE-6740-4199-96EC-622240537C8A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{69D3CBDE-6740-4199-96EC-622240537C8A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{B35FE686-B955-4C7A-AA7F-BA1FF5185674} = {8A9515FE-6CCF-4B80-9A37-87C2C3583424}
+		{69D3CBDE-6740-4199-96EC-622240537C8A} = {8A9515FE-6CCF-4B80-9A37-87C2C3583424}
 	EndGlobalSection
 EndGlobal
