@@ -9,18 +9,18 @@ single small dll.
 * Simplified API.
 Unlike SharpDX or SlimDX, LightDX is not a DirectX binding. Therefore it hides
 the complicated details of creating each components and only provides simplified
-API, which makes it much easier to use. This may have some limit, but hopefully 
-LightDX will provide you everything you really need.
+API, which makes it much easier to use. This may have some limits, but hopefully 
+LightDX will provide everything you really need.
 * Effective. LightDX utilizes calli instruction to call native COM methods, as
 SharpDX does. This should be the fastest method. Other parts are also written with
 efficiency in mind (at least to my best).
 
 # Example
-See [Program.cs](Program.cs).
+See projects in the [Examples](Examples) folder.
 
 # TODO
-LightDX currently lacks some key features. These includes:
-* Texture2D.
+LightDX currently lacks some key features. These include:
+* Sampler.
 * Constant buffer.
 * Dynamic vertex buffer.
 * Index buffer.
