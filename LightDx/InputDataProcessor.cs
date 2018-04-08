@@ -88,15 +88,10 @@ namespace LightDx
 
         public unsafe void UpdateBuffer(InputBuffer buffer, T[] data)
         {
-            _UpdateSubresourceMethod(_Device.ContextPtr, buffer.BufferPtr, 0, null, data, 0, 0);
+            _UpdateSubresourceMethod(_Device.ContextPtr, buffer.BufferPtr, 0, null, data, 0, 0).Check();
         }
 
-        public void UpdateBufferMap(InputBuffer buffer, T[] data)
-        {
-            throw new NotImplementedException();
-        }
-
-        public unsafe void UpdateBufferMapDynamic(InputBuffer buffer, T[] data)
+        public unsafe void UpdateBufferDynamic(InputBuffer buffer, T[] data)
         {
             SubresourceData ret;
             DeviceContext.Map(_Device.ContextPtr, buffer.BufferPtr, 0,
@@ -104,7 +99,7 @@ namespace LightDx
 
             _CopyArrayMethod(ret.pSysMem, data, Size * data.Length);
 
-            DeviceContext.Unmap(_Device.ContextPtr, buffer.BufferPtr, 0);
+            DeviceContext.Unmap(_Device.ContextPtr, buffer.BufferPtr, 0).Check();
         }
 
         internal static InputElementDescription[] CreateLayoutFromType()

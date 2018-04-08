@@ -67,7 +67,7 @@ namespace TextureTriangle
                 device.RunMultithreadLoop(delegate()
                 {
                     target.ClearAll(Color.BlanchedAlmond);
-                    buffer.RenderAll();
+                    buffer.DrawAll();
                     device.Present(true);
                 });
             }

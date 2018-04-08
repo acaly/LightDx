@@ -316,7 +316,7 @@ namespace LightDx
             }
         }
 
-        public IntPtr InternalCreateTexture2D(int width, int height, int format)
+        private IntPtr InternalCreateTexture2D(int width, int height, int format)
         {
             Texture2DDescription t2d = new Texture2DDescription
             {
@@ -336,6 +336,66 @@ namespace LightDx
             Device.CreateTexture2D(_Device, ref t2d, IntPtr.Zero, out var tex).Check();
             
             return tex;
+        }
+
+        private Device.CreateBufferDelegate_SetPtr<uint> _CreateBufferMethod32 =
+            CalliGenerator.GetCalliDelegate_Device_CreateBuffer
+                <Device.CreateBufferDelegate_SetPtr<uint>, uint>(3, 2);
+        private Device.CreateBufferDelegate_SetPtr<ushort> _CreateBufferMethod16 =
+            CalliGenerator.GetCalliDelegate_Device_CreateBuffer
+                <Device.CreateBufferDelegate_SetPtr<ushort>, ushort>(3, 2);
+
+        public unsafe IndexBuffer CreateImmutableIndexBuffer(Array data, int offset = 0, int length = -1)
+        {
+            //TODO type check
+            int realLength = length == -1 ? data.Length - offset : length;
+            int indexSize = data is ushort[] ? 2 : 4;
+            BufferDescription bd = new BufferDescription()
+            {
+                ByteWidth = (uint)(indexSize * realLength),
+                Usage = 0, //default
+                BindFlags = 2, //indexbuffer
+                CPUAccessFlags = 0, //none. or write (65536)
+                MiscFlags = 0,
+                StructureByteStride = (uint)indexSize,
+            };
+            DataBox box = new DataBox
+            {
+                DataPointer = null, //the pointer is set (after pinned) in _CreateBufferMethod
+                RowPitch = 0,
+                SlicePitch = 0,
+            };
+            using (var vb = new ComScopeGuard())
+            {
+                if (indexSize == 2)
+                {
+                    _CreateBufferMethod16(DevicePtr, &bd, &box, out vb.Ptr, (ushort[])data).Check();
+                }
+                else
+                {
+                    _CreateBufferMethod32(DevicePtr, &bd, &box, out vb.Ptr, (uint[])data).Check();
+                }
+                return new IndexBuffer(this, vb.Move(), indexSize * 8, realLength);
+            }
+        }
+
+        public unsafe IndexBuffer CreateDynamicIndexBuffer(int bitWidth, int size)
+        {
+            //TODO check bitWidth
+            BufferDescription bd = new BufferDescription()
+            {
+                ByteWidth = (uint)(bitWidth / 8 * size),
+                Usage = 2, //dynamic
+                BindFlags = 2, //indexbuffer
+                CPUAccessFlags = 0x10000, //write
+                MiscFlags = 0,
+                StructureByteStride = (uint)bitWidth / 8,
+            };
+            using (var vb = new ComScopeGuard())
+            {
+                Device.CreateBuffer(DevicePtr, &bd, null, out vb.Ptr).Check();
+                return new IndexBuffer(this, vb.Move(), bitWidth / 8, size);
+            }
         }
 
         public void Present(bool vsync = false)

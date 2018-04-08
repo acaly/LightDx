@@ -111,8 +111,8 @@ namespace LightDx
 
             _Pipeline.SetResource(0, tex);
             _Pipeline.ApplyResources();
-            _Input.UpdateBufferMapDynamic(_Buffer, _Array);
-            _Buffer.RenderAll();
+            _Input.UpdateBufferDynamic(_Buffer, _Array);
+            _Buffer.DrawAll();
         }
 
         private void UpdatePoint(ref Vertex v, float x, float y, float dx, float dy, float s, float c, float tx, float ty)

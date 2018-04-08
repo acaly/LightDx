@@ -14,12 +14,12 @@ namespace LightDx
         //support only one buffer
         private IntPtr _Buffer;
         private IntPtr _Layout;
-        private uint _Stride, _PrimitiveCount;
+        private uint _Stride, _VertexCount;
 
         private bool _Disposed;
 
         internal InputBuffer(LightDevice device, IntPtr buffer, IntPtr layout,
-            int stride, int primitiveCount)
+            int stride, int vertexCount)
         {
             _Device = device;
             device.AddComponent(this);
@@ -27,7 +27,7 @@ namespace LightDx
             _Buffer = buffer;
             _Layout = layout;
             _Stride = (uint)stride;
-            _PrimitiveCount = (uint)primitiveCount;
+            _VertexCount = (uint)vertexCount;
         }
 
         ~InputBuffer()
@@ -49,14 +49,24 @@ namespace LightDx
             GC.SuppressFinalize(this);
         }
 
-        public unsafe void RenderAll()
+        internal unsafe void Bind()
         {
             DeviceContext.IASetInputLayout(_Device.ContextPtr, _Layout);
             uint stride = _Stride, offset = 0;
             IntPtr buffer = _Buffer;
             DeviceContext.IASetVertexBuffers(_Device.ContextPtr, 0, 1, &buffer, &stride, &offset);
+        }
 
-            DeviceContext.Draw(_Device.ContextPtr, _PrimitiveCount, 0);
+        public void DrawAll()
+        {
+            Bind();
+            DeviceContext.Draw(_Device.ContextPtr, _VertexCount, 0);
+        }
+
+        public void Draw(int vertexOffset, int vertexCount)
+        {
+            Bind();
+            DeviceContext.Draw(_Device.ContextPtr, (uint)vertexCount, (uint)vertexOffset);
         }
 
         internal IntPtr BufferPtr => _Buffer;

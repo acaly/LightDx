@@ -291,6 +291,11 @@ namespace LightDx.Natives
         public static readonly IASetVertexBuffersDelegate IASetVertexBuffers =
             CalliGenerator.GetCalliDelegate<IASetVertexBuffersDelegate>(18);
         
+        public unsafe delegate void IASetIndexBufferDelegate(IntPtr @this,
+            IntPtr buffer, uint format, uint offset);
+        public static readonly IASetIndexBufferDelegate IASetIndexBuffer =
+            CalliGenerator.GetCalliDelegate<IASetIndexBufferDelegate>(19);
+        
         public delegate void SetShaderDelegate(IntPtr @this,
             IntPtr vs, IntPtr ci, uint nci);
         public static readonly SetShaderDelegate VSSetShader =
@@ -309,7 +314,12 @@ namespace LightDx.Natives
             uint count, uint start);
         public static readonly DrawDelegate Draw =
             CalliGenerator.GetCalliDelegate<DrawDelegate>(13);
-        
+
+        public delegate void DrawIndexedDelegate(IntPtr @this,
+            uint count, uint start, int vertexBase);
+        public static readonly DrawIndexedDelegate DrawIndexed =
+            CalliGenerator.GetCalliDelegate<DrawIndexedDelegate>(12);
+
         public delegate void PSSetShaderResourcesDelegate(IntPtr @this,
             uint slot, uint num, ref IntPtr view);
         public static readonly PSSetShaderResourcesDelegate PSSetShaderResources =

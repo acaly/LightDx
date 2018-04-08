@@ -49,11 +49,13 @@ namespace Triangle
                     new Vertex { Color = Color.Blue, Position = new Float4(-0.5f, -0.5f, 0.5f, 1.0f) },
                 });
 
+                var indexBuffer = device.CreateImmutableIndexBuffer(new uint[] { 2, 0, 1 });
+
                 form.Show();
                 device.RunMultithreadLoop(delegate()
                 {
                     target.ClearAll(Color.BlanchedAlmond);
-                    buffer.RenderAll();
+                    indexBuffer.DrawAll(buffer);
                     device.Present(true);
                 });
             }
