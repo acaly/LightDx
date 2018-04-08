@@ -21,7 +21,7 @@ namespace LightDx
 
         private Device.CreateBufferDelegate_SetPtr<T> _CreateBufferMethod;
 
-        public InputDataProcessor(LightDevice device, IntPtr layout)
+        internal InputDataProcessor(LightDevice device, IntPtr layout)
         {
             _Device = device;
             device.AddComponent(this);

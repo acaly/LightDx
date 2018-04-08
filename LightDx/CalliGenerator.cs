@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace LightDx
 {
     //This class is modified version of http://rogue-modron.blogspot.ca/2011/11/invoking-native.html
-    class CalliGenerator
+    internal class CalliGenerator
     {
         public static TDelegate GetCalliDelegate<TDelegate>(int offset)
             where TDelegate : class
