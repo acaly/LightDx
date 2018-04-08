@@ -28,6 +28,8 @@ namespace LightDx
         private IntPtr _Vertex, _Geometry, _Pixel;
         private IntPtr _SignatureBlob;
 
+        private IntPtr _BlendPtr;
+
         private readonly InputTopology _Topology;
 
         //only 1 viewport
@@ -66,6 +68,7 @@ namespace LightDx
             NativeHelper.Dispose(ref _Geometry);
             NativeHelper.Dispose(ref _Pixel);
             NativeHelper.Dispose(ref _SignatureBlob);
+            NativeHelper.Dispose(ref _BlendPtr);
 
             foreach (var c in _Constants)
             {
@@ -119,6 +122,22 @@ namespace LightDx
             }
         }
 
+        public void SetBlender(Blender b)
+        {
+            NativeHelper.Dispose(ref _BlendPtr);
+            _BlendPtr = b.CreateBlenderForDevice(_Device);
+        }
+
+        public void SetSampler(int slot, Sampler s)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void SetDepthTest(DepthTest d)
+        {
+            throw new NotImplementedException();
+        }
+
         public unsafe void Apply()
         {
             if (_Disposed)
@@ -133,7 +152,15 @@ namespace LightDx
             {
                 DeviceContext.RSSetViewports(_Device.ContextPtr, 1, ptr);
             }
+            DeviceContext.OMSetBlendState(_Device.ContextPtr, _BlendPtr, IntPtr.Zero, 0xFFFFFFFF);
+            //TODO Samplers
             //TODO setup constant buffer
+            //TODO depth
+            ApplyResources();
+        }
+
+        internal void ApplyResources()
+        {
             foreach (var res in _Resources)
             {
                 IntPtr view = res.Value.ViewPtr;

@@ -12,16 +12,22 @@ namespace LightDx
 
         private IntPtr _Texture, _View;
         internal IntPtr ViewPtr { get { return _View; } }
+        internal IntPtr TexturePtr { get { return _Texture; } }
+        public int Width { get; private set; }
+        public int Height { get; private set; }
 
         private bool _Disposed;
 
-        internal Texture2D(LightDevice device, IntPtr tex, IntPtr view)
+        internal Texture2D(LightDevice device, IntPtr tex, IntPtr view, int w, int h)
         {
             _Device = device;
             device.AddComponent(this);
 
             _Texture = tex;
             _View = view;
+
+            Width = w;
+            Height = h;
         }
 
         ~Texture2D()

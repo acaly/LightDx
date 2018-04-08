@@ -20,6 +20,9 @@ namespace LightDx
         private bool _Disposed;
 
         private Device.CreateBufferDelegate_SetPtr<T> _CreateBufferMethod;
+        private DeviceContext.UpdateSubresourceDelegate<T> _UpdateSubresourceMethod;
+        private delegate void CopyArrayDelegate(IntPtr ptr, T[] array, int nbytes);
+        private CopyArrayDelegate _CopyArrayMethod;
 
         internal InputDataProcessor(LightDevice device, IntPtr layout)
         {
@@ -29,7 +32,10 @@ namespace LightDx
             _InputLayout = layout;
 
             _CreateBufferMethod = CalliGenerator.GetCalliDelegate_Device_CreateBuffer
-                    <Device.CreateBufferDelegate_SetPtr<T>, T>(3, 2);
+                <Device.CreateBufferDelegate_SetPtr<T>, T>(3, 2);
+            _UpdateSubresourceMethod = CalliGenerator.GetCalliDelegate_PinArray
+                <DeviceContext.UpdateSubresourceDelegate<T>, T>(48, 4);
+            _CopyArrayMethod = CalliGenerator.GenerateMemCopy<CopyArrayDelegate, T>();
         }
 
         ~InputDataProcessor()
@@ -40,26 +46,65 @@ namespace LightDx
         public unsafe InputBuffer CreateImmutableBuffer(T[] data, int offset = 0, int length = -1)
         {
             int realLength = length == -1 ? data.Length - offset : length;
-            BufferDescription bd = new BufferDescription();
-            bd.ByteWidth = (uint)(Size * realLength);
-            bd.Usage = 0; //default
-            bd.BindFlags = 1; //vertexbuffer
-            bd.CPUAccessFlags = 0; //none. or write (65536)
-            bd.MiscFlags = 0;
-            bd.StructureByteStride = (uint)Size;
+            BufferDescription bd = new BufferDescription()
             {
-                DataBox box = new DataBox
-                {
-                    DataPointer = null, //the pointer is set (after pinned) in _CreateBufferMethod
-                    RowPitch = 0,
-                    SlicePitch = 0,
-                };
-                using (var vb = new ComScopeGuard())
-                {
-                    _CreateBufferMethod(_Device.DevicePtr, &bd, &box, out vb.Ptr, data).Check();
-                    return new InputBuffer(_Device, vb.Move(), _InputLayout.AddRef(), Size, realLength);
-                }
+                ByteWidth = (uint)(Size * realLength),
+                Usage = 0, //default
+                BindFlags = 1, //vertexbuffer
+                CPUAccessFlags = 0, //none. or write (65536)
+                MiscFlags = 0,
+                StructureByteStride = (uint)Size
+            };
+            DataBox box = new DataBox
+            {
+                DataPointer = null, //the pointer is set (after pinned) in _CreateBufferMethod
+                RowPitch = 0,
+                SlicePitch = 0,
+            };
+            using (var vb = new ComScopeGuard())
+            {
+                _CreateBufferMethod(_Device.DevicePtr, &bd, &box, out vb.Ptr, data).Check();
+                return new InputBuffer(_Device, vb.Move(), _InputLayout.AddRef(), Size, realLength);
             }
+        }
+
+        public unsafe InputBuffer CreateDynamicBuffer(int nElement)
+        {
+            BufferDescription bd = new BufferDescription()
+            {
+                ByteWidth = (uint)(Size * nElement),
+                Usage = 2, //dynamic
+                BindFlags = 1, //vertexbuffer
+                CPUAccessFlags = 0x10000, //write
+                MiscFlags = 0,
+                StructureByteStride = (uint)Size
+            };
+            using (var vb = new ComScopeGuard())
+            {
+                Device.CreateBuffer(_Device.DevicePtr, &bd, null, out vb.Ptr).Check();
+                return new InputBuffer(_Device, vb.Move(), _InputLayout.AddRef(), Size, nElement);
+            }
+        }
+
+        public unsafe void UpdateBuffer(InputBuffer buffer, T[] data)
+        {
+            _UpdateSubresourceMethod(_Device.ContextPtr, buffer.BufferPtr, 0, null, data, 0, 0);
+        }
+
+        public void UpdateBufferMap(InputBuffer buffer, T[] data)
+        {
+            throw new NotImplementedException();
+        }
+
+        public unsafe void UpdateBufferMapDynamic(InputBuffer buffer, T[] data)
+        {
+            SubresourceData ret;
+            DeviceContext.Map(_Device.ContextPtr, buffer.BufferPtr, 0,
+                4 /* WRITE_DISCARD */, 0, &ret).Check();
+
+            _CopyArrayMethod(ret.pSysMem, data, Size * data.Length);
+
+            DeviceContext.Unmap(_Device.ContextPtr, buffer.BufferPtr, 0);
         }
 
         internal static InputElementDescription[] CreateLayoutFromType()

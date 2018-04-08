@@ -9,13 +9,15 @@ namespace LightDx
 {
     internal static class NativeHelper
     {
-        public static void Dispose(ref IntPtr obj)
+        public static int Dispose(ref IntPtr obj)
         {
+            int ret = 0;
             if (obj != IntPtr.Zero)
             {
-                Marshal.Release(obj);
+                ret = Marshal.Release(obj);
                 obj = IntPtr.Zero;
             }
+            return ret;
         }
 
         public static void Dispose(ref IntPtr[] a)

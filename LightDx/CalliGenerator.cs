@@ -15,17 +15,15 @@ namespace LightDx
         public static TDelegate GetCalliDelegate<TDelegate>(int offset)
             where TDelegate : class
         {
-            Type delegateType = typeof(TDelegate);
-            MethodInfo invokeInfo = delegateType.GetMethod("Invoke");
-
-            Type[] invokeTypes, calliTypes;
-            int lastRefIntPtr;
+            var delegateType = typeof(TDelegate);
+            var invokeInfo = delegateType.GetMethod("Invoke");
+            
             ScanParameter(invokeInfo.GetParameters(),
-                out invokeTypes, out calliTypes, out lastRefIntPtr);
+                out var invokeTypes, out var calliTypes, out var lastRefIntPtr);
 
-            DynamicMethod calliMethod = new DynamicMethod("CalliInvoke", invokeInfo.ReturnType,
-                    invokeTypes, typeof(CalliGenerator).Module, true);
-            ILGenerator generator = calliMethod.GetILGenerator();
+            var calliMethod = new DynamicMethod("CalliInvoke",
+                invokeInfo.ReturnType, invokeTypes, typeof(CalliGenerator).Module, true);
+            var generator = calliMethod.GetILGenerator();
 
             // Generate the pinned local
             generator.DeclareLocal(typeof(IntPtr).MakePointerType(), true);
@@ -37,7 +35,48 @@ namespace LightDx
                 generator.Emit(OpCodes.Stloc_0);
             }
 
-            GeneratePushArguments(generator, calliTypes.Length, lastRefIntPtr);
+            GeneratePushArguments(generator, calliTypes.Length, lastRefIntPtr, -1);
+            GenerateGetVTable(generator, offset);
+            generator.EmitCalli(OpCodes.Calli, CallingConvention.StdCall,
+                invokeInfo.ReturnType, calliTypes);
+
+            generator.Emit(OpCodes.Ret);
+
+            return (TDelegate)(object)calliMethod.CreateDelegate(delegateType);
+        }
+
+        public static TDelegate GetCalliDelegate_PinArray<TDelegate, TPin>(int offset, int pin)
+           where TDelegate : class
+        {
+            var delegateType = typeof(TDelegate);
+            var invokeInfo = delegateType.GetMethod("Invoke");
+            
+            ScanParameter(invokeInfo.GetParameters(),
+                out var invokeTypes, out var calliTypes, out var lastRefIntPtr);
+
+            var calliMethod = new DynamicMethod("CalliInvoke",
+                invokeInfo.ReturnType, invokeTypes, typeof(CalliGenerator).Module, true);
+            var generator = calliMethod.GetILGenerator();
+
+            // Generate the pinned local
+            generator.DeclareLocal(typeof(IntPtr).MakePointerType(), true);
+            generator.DeclareLocal(typeof(TPin).MakePointerType(), true);
+
+            // Pin the out IntPtr
+            if (lastRefIntPtr != -1)
+            {
+                generator.Emit(OpCodes.Ldarg, lastRefIntPtr);
+                generator.Emit(OpCodes.Stloc_0);
+            }
+
+            // Pin the array argument
+            generator.Emit(OpCodes.Ldarg, pin);
+            generator.Emit(OpCodes.Ldc_I4_0);
+            generator.Emit(OpCodes.Ldelema, typeof(TPin));
+            generator.Emit(OpCodes.Stloc_1);
+            calliTypes[pin] = typeof(TPin).MakePointerType();
+
+            GeneratePushArguments(generator, calliTypes.Length, lastRefIntPtr, pin);
             GenerateGetVTable(generator, offset);
             generator.EmitCalli(OpCodes.Calli, CallingConvention.StdCall,
                 invokeInfo.ReturnType, calliTypes);
@@ -50,17 +89,15 @@ namespace LightDx
         public static TDelegate GetCalliDelegate_Device_CreateBuffer<TDelegate, TArray>(int offset, int destArg)
             where TDelegate : class
         {
-            Type delegateType = typeof(TDelegate);
-            MethodInfo invokeInfo = delegateType.GetMethod("Invoke");
-
-            Type[] invokeTypes, calliTypes;
-            int lastRefIntPtr;
+            var delegateType = typeof(TDelegate);
+            var invokeInfo = delegateType.GetMethod("Invoke");
+            
             ScanParameter(invokeInfo.GetParameters(),
-                out invokeTypes, out calliTypes, out lastRefIntPtr);
+                out var invokeTypes, out var calliTypes, out var lastRefIntPtr);
 
-            DynamicMethod calliMethod = new DynamicMethod("CalliInvoke", invokeInfo.ReturnType,
-                    invokeTypes, typeof(CalliGenerator).Module, true);
-            ILGenerator generator = calliMethod.GetILGenerator();
+            var calliMethod = new DynamicMethod("CalliInvoke",
+                invokeInfo.ReturnType, invokeTypes, typeof(CalliGenerator).Module, true);
+            var generator = calliMethod.GetILGenerator();
 
             // Generate the pinned local
             generator.DeclareLocal(typeof(IntPtr).MakePointerType(), true);
@@ -84,7 +121,7 @@ namespace LightDx
             generator.Emit(OpCodes.Ldloc_1);
             generator.Emit(OpCodes.Stind_I);
 
-            GeneratePushArguments(generator, calliTypes.Length - 1, lastRefIntPtr);
+            GeneratePushArguments(generator, calliTypes.Length - 1, lastRefIntPtr, -1);
             GenerateGetVTable(generator, offset);
             generator.EmitCalli(OpCodes.Calli, CallingConvention.StdCall, invokeInfo.ReturnType,
                 calliTypes.Take(calliTypes.Length - 1).ToArray()); // Remove the last
@@ -122,13 +159,17 @@ namespace LightDx
             return type;
         }
 
-        private static void GeneratePushArguments(ILGenerator generator, int count, int pinnedRef)
+        private static void GeneratePushArguments(ILGenerator generator, int count, int pinnedRef, int pinnedRef2)
         {
             for (int i = 0; i < count; i++)
             {
                 if (i == pinnedRef)
                 {
                     generator.Emit(OpCodes.Ldloc_0);
+                }
+                else if (i == pinnedRef2)
+                {
+                    generator.Emit(OpCodes.Ldloc_1);
                 }
                 else if (i == 0)
                 {
@@ -163,6 +204,42 @@ namespace LightDx
             generator.Emit(OpCodes.Mul);
             generator.Emit(OpCodes.Add);
             generator.Emit(OpCodes.Ldind_I);
+        }
+
+        public static TDelegate GenerateMemCopy<TDelegate, TArray>()
+        {
+            var delegateType = typeof(TDelegate);
+            var invokeInfo = delegateType.GetMethod("Invoke");
+            var arrayType = typeof(TArray).MakeArrayType();
+            var invokeTypes = new[]
+            {
+                typeof(IntPtr),
+                arrayType,
+                typeof(int),
+            };
+
+            var calliMethod = new DynamicMethod("CalliInvoke",
+                invokeInfo.ReturnType, invokeTypes, typeof(CalliGenerator).Module, true);
+            var generator = calliMethod.GetILGenerator();
+
+            // Generate the pinned local
+            generator.DeclareLocal(arrayType, true);
+
+            // Pin the array
+            generator.Emit(OpCodes.Ldarg_1);
+            generator.Emit(OpCodes.Ldc_I4_0);
+            generator.Emit(OpCodes.Ldelema, typeof(TArray));
+            generator.Emit(OpCodes.Stloc_0);
+
+            // Copy
+            generator.Emit(OpCodes.Ldarg_0);
+            generator.Emit(OpCodes.Ldloc_0);
+            generator.Emit(OpCodes.Ldarg_2);
+            generator.Emit(OpCodes.Cpblk);
+            
+            generator.Emit(OpCodes.Ret);
+
+            return (TDelegate)(object)calliMethod.CreateDelegate(delegateType);
         }
     }
 }

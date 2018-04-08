@@ -18,7 +18,8 @@ namespace LightDx
 
         private bool _Disposed;
 
-        internal InputBuffer(LightDevice device, IntPtr buffer, IntPtr layout, int stride, int primitiveCount)
+        internal InputBuffer(LightDevice device, IntPtr buffer, IntPtr layout,
+            int stride, int primitiveCount)
         {
             _Device = device;
             device.AddComponent(this);
@@ -57,5 +58,7 @@ namespace LightDx
 
             DeviceContext.Draw(_Device.ContextPtr, _PrimitiveCount, 0);
         }
+
+        internal IntPtr BufferPtr => _Buffer;
     }
 }

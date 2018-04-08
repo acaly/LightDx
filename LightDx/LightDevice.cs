@@ -26,8 +26,8 @@ namespace LightDx
         private IntPtr _Output;
         private IntPtr _DefaultRenderView;
 
-        internal IntPtr DevicePtr { get { return _Device; } }
-        internal IntPtr ContextPtr { get { return _Context; } }
+        internal IntPtr DevicePtr => _Device;
+        internal IntPtr ContextPtr => _Context;
 
         private IntPtr _DepthStencilView;
 
@@ -76,8 +76,7 @@ namespace LightDx
         {
             for (int i = 0; i < _Components.Count; ++i)
             {
-                IDisposable c;
-                if (_Components[i].TryGetTarget(out c) && c == obj)
+                if (_Components[i].TryGetTarget(out var c) && c == obj)
                 {
                     _Components.RemoveAt(i);
                     return;
@@ -119,13 +118,11 @@ namespace LightDx
                 //get default render target
                 IntPtr renderView;
                 {
-                    IntPtr backBuffer;
-                    SwapChain.GetBuffer(swapChain, 0, Guids.Texture2D, out backBuffer).Check();
-                    using (new ComScopeGuard(backBuffer))
+                    using (var backBuffer = new ComScopeGuard())
                     {
-                        Device.CreateRenderTargetView(device, backBuffer, IntPtr.Zero, out renderView).Check();
+                        SwapChain.GetBuffer(swapChain, 0, Guids.Texture2D, out backBuffer.Ptr).Check();
+                        Device.CreateRenderTargetView(device, backBuffer.Ptr, IntPtr.Zero, out renderView).Check();
                     }
-
                     ret._DefaultRenderView = renderView;
                 }
 
@@ -156,7 +153,7 @@ namespace LightDx
                 Height = (uint)_Height,
                 MipLevels = 1,
                 ArraySize = 1,
-                Format = PixelFormat.DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
+                Format = 20, //DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
                 SampleCount = 1,
                 SampleQuality = 0,
                 Usage = 0, //Default
@@ -195,24 +192,24 @@ namespace LightDx
 
         public Pipeline CompilePipeline(string shaderCodeString, bool useGeometryShader, InputTopology topology)
         {
-            return CompilePipeline(Encoding.ASCII.GetBytes(shaderCodeString), useGeometryShader, topology);
+            return CompilePipeline(Encoding.ASCII.GetBytes(shaderCodeString), true, useGeometryShader, topology);
         }
 
         public Pipeline CompilePipeline(Stream shaderCodeStream, bool useGeometryShader, InputTopology topology)
         {
             byte[] shaderCode = new byte[shaderCodeStream.Length];
             shaderCodeStream.Read(shaderCode, 0, shaderCode.Length);
-            return CompilePipeline(shaderCode, useGeometryShader, topology);
+            return CompilePipeline(shaderCode, true, useGeometryShader, topology);
         }
 
-        public unsafe Pipeline CompilePipeline(byte[] shaderCode, bool useGeometryShader, InputTopology topology)
+        public unsafe Pipeline CompilePipeline(byte[] shaderCode, bool useVertexShader, bool useGeometryShader, InputTopology topology)
         {
             using (ComScopeGuard vertexShader = new ComScopeGuard(), pixelShader = new ComScopeGuard(),
                 geometryShader = new ComScopeGuard(), signatureBlob = new ComScopeGuard())
             {
                 fixed (byte* codePtr = shaderCode)
                 {
-                    using (var blob = new ComScopeGuard())
+                    if (useVertexShader) using (var blob = new ComScopeGuard())
                     {
                         blob.Ptr = Compile(codePtr, shaderCode.Length,
                             CompilerStringConstants.VS, CompilerStringConstants.vs_4_0);
@@ -228,7 +225,7 @@ namespace LightDx
                         Device.CreateGeometryShader(_Device, Blob.GetBufferPointer(blob.Ptr), Blob.GetBufferSize(blob.Ptr),
                             IntPtr.Zero, out geometryShader.Ptr);
                     }
-                    using (var blob = new ComScopeGuard())
+                    using(var blob = new ComScopeGuard())
                     {
                         blob.Ptr = Compile(codePtr, shaderCode.Length,
                             CompilerStringConstants.PS, CompilerStringConstants.ps_4_0);
@@ -272,7 +269,7 @@ namespace LightDx
             {
                 tex.Ptr = InternalCreateTexture2D(bitmap);
                 Device.CreateShaderResourceView(_Device, tex.Ptr, IntPtr.Zero, out view.Ptr).Check();
-                return new Texture2D(this, tex.Move(), view.Move());
+                return new Texture2D(this, tex.Move(), view.Move(), bitmap.Width, bitmap.Height);
             }
         }
 
@@ -294,10 +291,10 @@ namespace LightDx
                 Height = (uint)bitmap.Height,
                 MipLevels = 1,
                 ArraySize = 1,
-                Format = PixelFormat.DXGI_FORMAT_B8G8R8A8_UNORM,
+                Format = 87, //DXGI_FORMAT_B8G8R8A8_UNORM,
                 SampleCount = 1,
                 SampleQuality = 0,
-                Usage = 1,
+                Usage = 1, //immutable
                 BindFlags = 8, //ShaderResource
                 CPUAccessFlags = 0,
                 MiscFlags = 0,
@@ -309,20 +306,52 @@ namespace LightDx
                 pSysMem = locked.Scan0,
                 SysMemPitch = (uint)locked.Stride,
             };
+            
+            Device.CreateTexture2D(_Device, ref t2d, new IntPtr(&data), out var tex).Check();
 
-            IntPtr tex;
-            Device.CreateTexture2D(_Device, ref t2d, new IntPtr(&data), out tex).Check();
+            bitmap.UnlockBits(locked);
+            return tex;
+        }
 
+        public Texture2D CreateTexture2D(int width, int height, int format)
+        {
+            using (ComScopeGuard tex = new ComScopeGuard(), view = new ComScopeGuard())
+            {
+                tex.Ptr = InternalCreateTexture2D(width, height, format);
+                Device.CreateShaderResourceView(_Device, tex.Ptr, IntPtr.Zero, out view.Ptr).Check();
+                return new Texture2D(this, tex.Move(), view.Move(), width, height);
+            }
+        }
+
+        public IntPtr InternalCreateTexture2D(int width, int height, int format)
+        {
+            Texture2DDescription t2d = new Texture2DDescription
+            {
+                Width = (uint)width,
+                Height = (uint)height,
+                MipLevels = 1,
+                ArraySize = 1,
+                Format = (uint)format, //87=DXGI_FORMAT_B8G8R8A8_UNORM,
+                SampleCount = 1,
+                SampleQuality = 0,
+                Usage = 2, //2=dynamic
+                BindFlags = 8, //ShaderResource
+                CPUAccessFlags = 0x10000, //write only
+                MiscFlags = 0,
+            };
+
+            Device.CreateTexture2D(_Device, ref t2d, IntPtr.Zero, out var tex).Check();
+            
             return tex;
         }
 
         public void Present(bool vsync = false)
         {
-            SwapChain.Present(_Swapchain, 0, 0);
             if (vsync)
             {
                 Output.WaitForVerticalBlank(_Output);
             }
+            SwapChain.Present(_Swapchain, 0, 0);
         }
 
         public void DoEvents()
@@ -407,7 +436,7 @@ namespace LightDx
                 }
             });
             th.Start();
-            while (_Ctrl.Visible)
+            while (_Ctrl.Visible && th.ThreadState == ThreadState.Running)
             {
                 DoEvents();
                 Thread.Sleep(100);
