@@ -190,19 +190,12 @@ namespace LightDx
                 useDepthStencil ? GetDefaultDepthStencil().AddRef() : IntPtr.Zero);
         }
 
-        public Pipeline CompilePipeline(string shaderCodeString, bool useGeometryShader, InputTopology topology)
+        public Pipeline CompilePipeline(ShaderSource shader, bool useGeometryShader, InputTopology topology)
         {
-            return CompilePipeline(Encoding.ASCII.GetBytes(shaderCodeString), true, useGeometryShader, topology);
+            return CompilePipeline(shader.Data, true, useGeometryShader, topology);
         }
 
-        public Pipeline CompilePipeline(Stream shaderCodeStream, bool useGeometryShader, InputTopology topology)
-        {
-            byte[] shaderCode = new byte[shaderCodeStream.Length];
-            shaderCodeStream.Read(shaderCode, 0, shaderCode.Length);
-            return CompilePipeline(shaderCode, true, useGeometryShader, topology);
-        }
-
-        public unsafe Pipeline CompilePipeline(byte[] shaderCode, bool useVertexShader, bool useGeometryShader, InputTopology topology)
+        private unsafe Pipeline CompilePipeline(byte[] shaderCode, bool useVertexShader, bool useGeometryShader, InputTopology topology)
         {
             using (ComScopeGuard vertexShader = new ComScopeGuard(), pixelShader = new ComScopeGuard(),
                 geometryShader = new ComScopeGuard(), signatureBlob = new ComScopeGuard())

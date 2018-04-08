@@ -31,7 +31,7 @@ namespace LightDx
             _Device = device;
             device.AddComponent(this);
 
-            _Pipeline = device.CompilePipeline(PipelineCode, false, InputTopology.Triangle);
+            _Pipeline = device.CompilePipeline(ShaderSource.FromString(PipelineCode), false, InputTopology.Triangle);
             _Pipeline.SetBlender(Blender.AlphaBlender);
 
             _Input = _Pipeline.CreateInputDataProcessor<Vertex>();

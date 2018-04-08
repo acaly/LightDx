@@ -37,7 +37,7 @@ namespace Triangle
                 Pipeline pipeline;
                 using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Triangle.Shader.fx"))
                 {
-                    pipeline = device.CompilePipeline(stream, false, InputTopology.Triangle);
+                    pipeline = device.CompilePipeline(ShaderSource.FromStream(stream), false, InputTopology.Triangle);
                 }
                 pipeline.Apply();
 
