@@ -1,4 +1,6 @@
 # LightDX
+[![NuGet](https://img.shields.io/nuget/v/LightDx.svg)](https://www.nuget.org/packages/LightDx/)
+
 LightDX is a graphics library in C#. It is designed to be used for those who just
 want to use Direct3D for fast rendering. It supports important funtions in
 Direct3D but you have to use .NET framework if you need user input, etc. Some
@@ -20,6 +22,9 @@ efficiency in mind (at least to my best).
 
 Please note that LightDX only supports Windows desktop application. Other platforms
 are not tested.
+
+# Usage
+Nuget package ```LightDx``` is available now. (Only .NET Framework 4.7 is supported.)
 
 # Example
 See projects in the [Examples](Examples) folder.

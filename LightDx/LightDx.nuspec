@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>LightDx</id>
+    <version>0.1.0</version>
+    <authors>Zhenwei Wu</authors>
+    <owners>Zhenwei Wu</owners>
+    <licenseUrl>https://opensource.org/licenses/MIT</licenseUrl>
+    <projectUrl>http://github.com/acaly/LightDX</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>A lightweight and easy-to-use C# graphics library backed by DirectX 11.</description>
+    <releaseNotes></releaseNotes>
+    <copyright>Copyright 2018 Zhenwei Wu</copyright>
+    <tags>direct3d directx graphics utility</tags>
+    <dependencies>
+    </dependencies>
+  </metadata>
+</package>
