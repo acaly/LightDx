@@ -22,34 +22,34 @@ namespace LightDx
 
     public class Pipeline : IDisposable
     {
-        private readonly LightDevice _Device;
-        private bool _Disposed;
+        private readonly LightDevice _device;
+        private bool _disposed;
 
-        private IntPtr _Vertex, _Geometry, _Pixel;
-        private IntPtr _SignatureBlob;
+        private IntPtr _vertex, _geometry, _pixel;
+        private IntPtr _signatureBlob;
 
-        private IntPtr _BlendPtr;
+        private IntPtr _blendPtr;
 
-        private readonly InputTopology _Topology;
+        private readonly InputTopology _topology;
 
         //only 1 viewport
-        private Viewport _Viewport;
+        private Viewport _viewport;
 
-        private Dictionary<int, AbstractPipelineConstant> _Constants = new Dictionary<int, AbstractPipelineConstant>();
-        private Dictionary<int, Texture2D> _Resources = new Dictionary<int, Texture2D>();
+        private Dictionary<int, AbstractPipelineConstant> _constants = new Dictionary<int, AbstractPipelineConstant>();
+        private Dictionary<int, Texture2D> _resources = new Dictionary<int, Texture2D>();
 
         internal Pipeline(LightDevice device, IntPtr v, IntPtr g, IntPtr p, IntPtr sign, Viewport vp, InputTopology topology)
         {
-            _Device = device;
+            _device = device;
             device.AddComponent(this);
 
-            _Vertex = v;
-            _Geometry = g;
-            _Pixel = p;
-            _SignatureBlob = sign;
+            _vertex = v;
+            _geometry = g;
+            _pixel = p;
+            _signatureBlob = sign;
 
-            _Viewport = vp;
-            _Topology = topology;
+            _viewport = vp;
+            _topology = topology;
         }
 
         ~Pipeline()
@@ -59,32 +59,32 @@ namespace LightDx
 
         public void Dispose()
         {
-            if (_Disposed)
+            if (_disposed)
             {
                 return;
             }
 
-            NativeHelper.Dispose(ref _Vertex);
-            NativeHelper.Dispose(ref _Geometry);
-            NativeHelper.Dispose(ref _Pixel);
-            NativeHelper.Dispose(ref _SignatureBlob);
-            NativeHelper.Dispose(ref _BlendPtr);
+            NativeHelper.Dispose(ref _vertex);
+            NativeHelper.Dispose(ref _geometry);
+            NativeHelper.Dispose(ref _pixel);
+            NativeHelper.Dispose(ref _signatureBlob);
+            NativeHelper.Dispose(ref _blendPtr);
 
-            foreach (var c in _Constants)
+            foreach (var c in _constants)
             {
                 c.Value.Dispose();
             }
-            _Constants.Clear();
+            _constants.Clear();
 
-            _Disposed = true;
-            _Device.RemoveComponent(this);
+            _disposed = true;
+            _device.RemoveComponent(this);
             GC.SuppressFinalize(this);
         }
 
         public PipelineConstant<T> CreateConstantBuffer<T>(ConstantBufferUsage usage, int slot)
             where T : struct
         {
-            if (_Disposed)
+            if (_disposed)
             {
                 throw new ObjectDisposedException("Pipeline");
             }
@@ -94,7 +94,7 @@ namespace LightDx
         public unsafe InputDataProcessor<T> CreateInputDataProcessor<T>()
             where T : struct
         {
-            if (_Disposed)
+            if (_disposed)
             {
                 throw new ObjectDisposedException("Pipeline");
             }
@@ -103,10 +103,10 @@ namespace LightDx
             {
                 fixed (InputElementDescription* d = layoutDecl)
                 {
-                    Device.CreateInputLayout(_Device.DevicePtr, d, (uint)layoutDecl.Length,
-                        Blob.GetBufferPointer(_SignatureBlob), Blob.GetBufferSize(_SignatureBlob), out layout.Ptr).Check();
+                    Device.CreateInputLayout(_device.DevicePtr, d, (uint)layoutDecl.Length,
+                        Blob.GetBufferPointer(_signatureBlob), Blob.GetBufferSize(_signatureBlob), out layout.Ptr).Check();
                 }
-                return new InputDataProcessor<T>(_Device, layout.Move());
+                return new InputDataProcessor<T>(_device, layout.Move());
             }
         }
 
@@ -114,18 +114,18 @@ namespace LightDx
         {
             if (tex == null)
             {
-                _Resources.Remove(slot);
+                _resources.Remove(slot);
             }
             else
             {
-                _Resources[slot] = tex;
+                _resources[slot] = tex;
             }
         }
 
         public void SetBlender(Blender b)
         {
-            NativeHelper.Dispose(ref _BlendPtr);
-            _BlendPtr = b.CreateBlenderForDevice(_Device);
+            NativeHelper.Dispose(ref _blendPtr);
+            _blendPtr = b.CreateBlenderForDevice(_device);
         }
 
         public void SetSampler(int slot, Sampler s)
@@ -140,19 +140,19 @@ namespace LightDx
 
         public unsafe void Apply()
         {
-            if (_Disposed)
+            if (_disposed)
             {
                 throw new ObjectDisposedException("Pipeline");
             }
-            DeviceContext.IASetPrimitiveTopology(_Device.ContextPtr, (uint)_Topology);
-            DeviceContext.VSSetShader(_Device.ContextPtr, _Vertex, IntPtr.Zero, 0);
-            DeviceContext.GSSetShader(_Device.ContextPtr, _Geometry, IntPtr.Zero, 0);
-            DeviceContext.PSSetShader(_Device.ContextPtr, _Pixel, IntPtr.Zero, 0);
-            fixed (Viewport* ptr = &_Viewport)
+            DeviceContext.IASetPrimitiveTopology(_device.ContextPtr, (uint)_topology);
+            DeviceContext.VSSetShader(_device.ContextPtr, _vertex, IntPtr.Zero, 0);
+            DeviceContext.GSSetShader(_device.ContextPtr, _geometry, IntPtr.Zero, 0);
+            DeviceContext.PSSetShader(_device.ContextPtr, _pixel, IntPtr.Zero, 0);
+            fixed (Viewport* ptr = &_viewport)
             {
-                DeviceContext.RSSetViewports(_Device.ContextPtr, 1, ptr);
+                DeviceContext.RSSetViewports(_device.ContextPtr, 1, ptr);
             }
-            DeviceContext.OMSetBlendState(_Device.ContextPtr, _BlendPtr, IntPtr.Zero, 0xFFFFFFFF);
+            DeviceContext.OMSetBlendState(_device.ContextPtr, _blendPtr, IntPtr.Zero, 0xFFFFFFFF);
             //TODO Samplers
             //TODO setup constant buffer
             //TODO depth
@@ -161,10 +161,10 @@ namespace LightDx
 
         internal void ApplyResources()
         {
-            foreach (var res in _Resources)
+            foreach (var res in _resources)
             {
                 IntPtr view = res.Value.ViewPtr;
-                DeviceContext.PSSetShaderResources(_Device.ContextPtr, (uint)res.Key, 1, ref view);
+                DeviceContext.PSSetShaderResources(_device.ContextPtr, (uint)res.Key, 1, ref view);
             }
         }
     }

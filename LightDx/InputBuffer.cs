@@ -9,26 +9,26 @@ namespace LightDx
 {
     public class InputBuffer : IDisposable
     {
-        private readonly LightDevice _Device;
+        private readonly LightDevice _device;
 
         //support only one buffer
-        private IntPtr _Buffer;
-        private IntPtr _Layout;
-        private uint _Stride;
-        private int _VertexCount;
+        private IntPtr _buffer;
+        private IntPtr _layout;
+        private uint _stride;
+        private int _vertexCount;
 
         private bool _Disposed;
 
         internal InputBuffer(LightDevice device, IntPtr buffer, IntPtr layout,
             int stride, int vertexCount)
         {
-            _Device = device;
+            _device = device;
             device.AddComponent(this);
 
-            _Buffer = buffer;
-            _Layout = layout;
-            _Stride = (uint)stride;
-            _VertexCount = vertexCount;
+            _buffer = buffer;
+            _layout = layout;
+            _stride = (uint)stride;
+            _vertexCount = vertexCount;
         }
 
         ~InputBuffer()
@@ -42,33 +42,33 @@ namespace LightDx
             {
                 return;
             }
-            NativeHelper.Dispose(ref _Buffer);
-            NativeHelper.Dispose(ref _Layout);
+            NativeHelper.Dispose(ref _buffer);
+            NativeHelper.Dispose(ref _layout);
 
             _Disposed = true;
-            _Device.RemoveComponent(this);
+            _device.RemoveComponent(this);
             GC.SuppressFinalize(this);
         }
 
         internal unsafe void Bind()
         {
-            DeviceContext.IASetInputLayout(_Device.ContextPtr, _Layout);
-            uint stride = _Stride, offset = 0;
-            IntPtr buffer = _Buffer;
-            DeviceContext.IASetVertexBuffers(_Device.ContextPtr, 0, 1, &buffer, &stride, &offset);
+            DeviceContext.IASetInputLayout(_device.ContextPtr, _layout);
+            uint stride = _stride, offset = 0;
+            IntPtr buffer = _buffer;
+            DeviceContext.IASetVertexBuffers(_device.ContextPtr, 0, 1, &buffer, &stride, &offset);
         }
 
         public void DrawAll()
         {
-            Draw(0, _VertexCount);
+            Draw(0, _vertexCount);
         }
 
         public void Draw(int vertexOffset, int vertexCount)
         {
             Bind();
-            DeviceContext.Draw(_Device.ContextPtr, (uint)vertexCount, (uint)vertexOffset);
+            DeviceContext.Draw(_device.ContextPtr, (uint)vertexCount, (uint)vertexOffset);
         }
 
-        internal IntPtr BufferPtr => _Buffer;
+        internal IntPtr BufferPtr => _buffer;
     }
 }

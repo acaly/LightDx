@@ -13,18 +13,18 @@ namespace LightDx
     public class InputDataProcessor<T> : IDisposable
         where T : struct
     {
-        private static int Size = Marshal.SizeOf(typeof(T));
-        private readonly LightDevice _Device;
-        private IntPtr _InputLayout;
+        private static int _Size = Marshal.SizeOf(typeof(T));
+        private readonly LightDevice _device;
+        private IntPtr _inputLayout;
 
-        private bool _Disposed;
+        private bool _disposed;
 
         internal InputDataProcessor(LightDevice device, IntPtr layout)
         {
-            _Device = device;
+            _device = device;
             device.AddComponent(this);
 
-            _InputLayout = layout;
+            _inputLayout = layout;
         }
 
         ~InputDataProcessor()
@@ -37,12 +37,12 @@ namespace LightDx
             int realLength = length == -1 ? data.Length - offset : length;
             BufferDescription bd = new BufferDescription()
             {
-                ByteWidth = (uint)(Size * realLength),
+                ByteWidth = (uint)(_Size * realLength),
                 Usage = 0, //default
                 BindFlags = 1, //vertexbuffer
                 CPUAccessFlags = 0, //none. or write (65536)
                 MiscFlags = 0,
-                StructureByteStride = (uint)Size
+                StructureByteStride = (uint)_Size
             };
             DataBox box = new DataBox
             {
@@ -52,8 +52,8 @@ namespace LightDx
             };
             using (var vb = new ComScopeGuard())
             {
-                StructArrayHelper<T>.CreateBuffer(_Device.DevicePtr, &bd, &box, out vb.Ptr, data).Check();
-                return new InputBuffer(_Device, vb.Move(), _InputLayout.AddRef(), Size, realLength);
+                StructArrayHelper<T>.CreateBuffer(_device.DevicePtr, &bd, &box, out vb.Ptr, data).Check();
+                return new InputBuffer(_device, vb.Move(), _inputLayout.AddRef(), _Size, realLength);
             }
         }
 
@@ -61,34 +61,34 @@ namespace LightDx
         {
             BufferDescription bd = new BufferDescription()
             {
-                ByteWidth = (uint)(Size * nElement),
+                ByteWidth = (uint)(_Size * nElement),
                 Usage = 2, //dynamic
                 BindFlags = 1, //vertexbuffer
                 CPUAccessFlags = 0x10000, //write
                 MiscFlags = 0,
-                StructureByteStride = (uint)Size
+                StructureByteStride = (uint)_Size
             };
             using (var vb = new ComScopeGuard())
             {
-                Device.CreateBuffer(_Device.DevicePtr, &bd, null, out vb.Ptr).Check();
-                return new InputBuffer(_Device, vb.Move(), _InputLayout.AddRef(), Size, nElement);
+                Device.CreateBuffer(_device.DevicePtr, &bd, null, out vb.Ptr).Check();
+                return new InputBuffer(_device, vb.Move(), _inputLayout.AddRef(), _Size, nElement);
             }
         }
 
         public unsafe void UpdateBuffer(InputBuffer buffer, T[] data)
         {
-            StructArrayHelper<T>.UpdateSubresource(_Device.ContextPtr, buffer.BufferPtr, 0, null, data, 0, 0).Check();
+            StructArrayHelper<T>.UpdateSubresource(_device.ContextPtr, buffer.BufferPtr, 0, null, data, 0, 0).Check();
         }
 
         public unsafe void UpdateBufferDynamic(InputBuffer buffer, T[] data)
         {
             SubresourceData ret;
-            DeviceContext.Map(_Device.ContextPtr, buffer.BufferPtr, 0,
+            DeviceContext.Map(_device.ContextPtr, buffer.BufferPtr, 0,
                 4 /* WRITE_DISCARD */, 0, &ret).Check();
 
-            StructArrayHelper<T>.CopyArray(ret.pSysMem, data, Size * data.Length);
+            StructArrayHelper<T>.CopyArray(ret.pSysMem, data, _Size * data.Length);
 
-            DeviceContext.Unmap(_Device.ContextPtr, buffer.BufferPtr, 0);
+            DeviceContext.Unmap(_device.ContextPtr, buffer.BufferPtr, 0);
         }
 
         internal static InputElementDescription[] CreateLayoutFromType()
@@ -136,14 +136,14 @@ namespace LightDx
 
         public void Dispose()
         {
-            if (_Disposed)
+            if (_disposed)
             {
                 return;
             }
-            NativeHelper.Dispose(ref _InputLayout);
+            NativeHelper.Dispose(ref _inputLayout);
 
-            _Disposed = true;
-            _Device.RemoveComponent(this);
+            _disposed = true;
+            _device.RemoveComponent(this);
             GC.SuppressFinalize(this);
         }
     }

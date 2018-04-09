@@ -10,59 +10,59 @@ namespace LightDx
 {
     public class RenderTarget : IDisposable
     {
-        private readonly LightDevice _Device;
+        private readonly LightDevice _device;
 
-        private bool _Disposed;
+        private bool _disposed;
 
-        private IntPtr[] _TargetView;
-        private IntPtr _DepthStencil;
+        private IntPtr[] _targetView;
+        private IntPtr _depthStencil;
 
         private RenderTarget(LightDevice device)
         {
-            _Device = device;
+            _device = device;
             device.AddComponent(this);
         }
 
         internal RenderTarget(LightDevice device, IntPtr[] targetView, IntPtr depthStencil)
         {
-            _Device = device;
+            _device = device;
             device.AddComponent(this);
 
-            _TargetView = targetView;
-            _DepthStencil = depthStencil;
+            _targetView = targetView;
+            _depthStencil = depthStencil;
         }
 
         public RenderTarget Clone()
         {
-            if (_Disposed)
+            if (_disposed)
             {
                 throw new ObjectDisposedException("RenderTarget");
             }
 
-            var ret = new RenderTarget(_Device);
+            var ret = new RenderTarget(_device);
 
-            ret._TargetView = _TargetView.Select(v => v.AddRef()).ToArray();
-            ret._DepthStencil = _DepthStencil.AddRef();
+            ret._targetView = _targetView.Select(v => v.AddRef()).ToArray();
+            ret._depthStencil = _depthStencil.AddRef();
 
             return ret;
         }
 
         public void Merge(RenderTarget t)
         {
-            if (_Disposed || t._Disposed)
+            if (_disposed || t._disposed)
             {
                 throw new ObjectDisposedException("RenderTarget");
             }
-            if (_DepthStencil != null && t._DepthStencil != null)
+            if (_depthStencil != null && t._depthStencil != null)
             {
                 throw new InvalidOperationException("Merge two targets both with DepthStencil");
             }
 
-            if (t._DepthStencil != null)
+            if (t._depthStencil != null)
             {
-                _DepthStencil = t._DepthStencil.AddRef();
+                _depthStencil = t._depthStencil.AddRef();
             }
-            _TargetView = _TargetView.Concat(t._TargetView.Select(v => v.AddRef())).ToArray();
+            _targetView = _targetView.Concat(t._targetView.Select(v => v.AddRef())).ToArray();
 
             t.Dispose();
         }
@@ -74,44 +74,44 @@ namespace LightDx
 
         public void Dispose()
         {
-            if (_Disposed)
+            if (_disposed)
             {
                 return;
             }
 
-            NativeHelper.Dispose(ref _TargetView);
-            NativeHelper.Dispose(ref _DepthStencil);
+            NativeHelper.Dispose(ref _targetView);
+            NativeHelper.Dispose(ref _depthStencil);
 
-            _Disposed = true;
-            _Device.RemoveComponent(this);
+            _disposed = true;
+            _device.RemoveComponent(this);
             GC.SuppressFinalize(this);
         }
 
         public unsafe void Apply()
         {
-            if (_Disposed)
+            if (_disposed)
             {
                 throw new ObjectDisposedException("RenderTarget");
             }
-            fixed (IntPtr* ptr = _TargetView)
+            fixed (IntPtr* ptr = _targetView)
             {
-                DeviceContext.OMSetRenderTargets(_Device.ContextPtr, (uint)_TargetView.Length, ptr, _DepthStencil);
+                DeviceContext.OMSetRenderTargets(_device.ContextPtr, (uint)_targetView.Length, ptr, _depthStencil);
             }
         }
 
         public void ClearAll(Float4 color)
         {
-            if (_Disposed)
+            if (_disposed)
             {
                 throw new ObjectDisposedException("RenderTarget");
             }
-            foreach (var v in _TargetView)
+            foreach (var v in _targetView)
             {
-                DeviceContext.ClearRenderTargetView(_Device.ContextPtr, v, ref color);
+                DeviceContext.ClearRenderTargetView(_device.ContextPtr, v, ref color);
             }
-            if (_DepthStencil != IntPtr.Zero)
+            if (_depthStencil != IntPtr.Zero)
             {
-                DeviceContext.ClearDepthStencilView(_Device.ContextPtr, _DepthStencil, 1, 1.0f, 0);
+                DeviceContext.ClearDepthStencilView(_device.ContextPtr, _depthStencil, 1, 1.0f, 0);
             }
         }
     }

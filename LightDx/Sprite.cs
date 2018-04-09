@@ -21,23 +21,23 @@ namespace LightDx
             public Float4 TexCoord;
         }
 
-        private readonly LightDevice _Device;
-        private readonly Pipeline _Pipeline;
-        private readonly InputDataProcessor<Vertex> _Input;
-        private readonly InputBuffer _Buffer;
-        private readonly Vertex[] _Array;
-        private bool _Disposed;
+        private readonly LightDevice _device;
+        private readonly Pipeline _pipeline;
+        private readonly InputDataProcessor<Vertex> _input;
+        private readonly InputBuffer _buffer;
+        private readonly Vertex[] _array;
+        private bool _disposed;
 
         public Sprite(LightDevice device)
         {
-            _Device = device;
+            _device = device;
             device.AddComponent(this);
 
-            _Pipeline = device.CompilePipeline(ShaderSource.FromString(PipelineCode), false, InputTopology.Triangle);
-            _Pipeline.SetBlender(Blender.AlphaBlender);
+            _pipeline = device.CompilePipeline(ShaderSource.FromString(PipelineCode), false, InputTopology.Triangle);
+            _pipeline.SetBlender(Blender.AlphaBlender);
 
-            _Input = _Pipeline.CreateInputDataProcessor<Vertex>();
-            _Array = new[] {
+            _input = _pipeline.CreateInputDataProcessor<Vertex>();
+            _array = new[] {
                 new Vertex { TexCoord = new Float4(0, 0, 0, 0), Position = new Float4(0, 0, 0, 0) },
                 new Vertex { TexCoord = new Float4(1, 0, 0, 0), Position = new Float4(1, 0, 0, 0) },
                 new Vertex { TexCoord = new Float4(0, 1, 0, 0), Position = new Float4(0, 1, 0, 0) },
@@ -46,12 +46,12 @@ namespace LightDx
                 new Vertex { TexCoord = new Float4(1, 0, 0, 0), Position = new Float4(1, 0, 0, 0) },
                 new Vertex { TexCoord = new Float4(1, 1, 0, 0), Position = new Float4(1, 1, 0, 0) },
             };
-            _Buffer = _Input.CreateDynamicBuffer(6);
+            _buffer = _input.CreateDynamicBuffer(6);
         }
 
         ~Sprite()
         {
-            if (!_Disposed)
+            if (!_disposed)
             {
                 Dispose();
             }
@@ -59,23 +59,23 @@ namespace LightDx
 
         public void Dispose()
         {
-            if (_Disposed)
+            if (_disposed)
             {
                 return;
             }
 
-            _Pipeline.Dispose();
-            _Input.Dispose();
-            _Buffer.Dispose();
+            _pipeline.Dispose();
+            _input.Dispose();
+            _buffer.Dispose();
 
-            _Disposed = true;
-            _Device.RemoveComponent(this);
+            _disposed = true;
+            _device.RemoveComponent(this);
             GC.SuppressFinalize(this);
         }
 
         public void Apply()
         {
-            _Pipeline.Apply();
+            _pipeline.Apply();
         }
 
         public void DrawTexture(Texture2D tex, int x, int y, int w, int h)
@@ -104,17 +104,17 @@ namespace LightDx
             var s = (float)Math.Sin(rotate);
             var c = (float)Math.Cos(rotate);
 
-            UpdatePoint(ref _Array[0], x, y, cl, ct, s, c, fx, fy);
-            UpdatePoint(ref _Array[1], x, y, cr, ct, s, c, fr, fy);
-            UpdatePoint(ref _Array[2], x, y, cl, cb, s, c, fx, fb);
-            UpdatePoint(ref _Array[3], x, y, cl, cb, s, c, fx, fb);
-            UpdatePoint(ref _Array[4], x, y, cr, ct, s, c, fr, fy);
-            UpdatePoint(ref _Array[5], x, y, cr, cb, s, c, fr, fb);
+            UpdatePoint(ref _array[0], x, y, cl, ct, s, c, fx, fy);
+            UpdatePoint(ref _array[1], x, y, cr, ct, s, c, fr, fy);
+            UpdatePoint(ref _array[2], x, y, cl, cb, s, c, fx, fb);
+            UpdatePoint(ref _array[3], x, y, cl, cb, s, c, fx, fb);
+            UpdatePoint(ref _array[4], x, y, cr, ct, s, c, fr, fy);
+            UpdatePoint(ref _array[5], x, y, cr, cb, s, c, fr, fb);
 
-            _Pipeline.SetResource(0, tex);
-            _Pipeline.ApplyResources();
-            _Input.UpdateBufferDynamic(_Buffer, _Array);
-            _Buffer.DrawAll();
+            _pipeline.SetResource(0, tex);
+            _pipeline.ApplyResources();
+            _input.UpdateBufferDynamic(_buffer, _array);
+            _buffer.DrawAll();
         }
 
         private void UpdatePoint(ref Vertex v, float x, float y, float dx, float dy, float s, float c, float tx, float ty)

@@ -8,23 +8,23 @@ namespace LightDx
 {
     public class Texture2D : IDisposable
     {
-        private readonly LightDevice _Device;
+        private readonly LightDevice _device;
 
-        private IntPtr _Texture, _View;
-        internal IntPtr ViewPtr { get { return _View; } }
-        internal IntPtr TexturePtr { get { return _Texture; } }
+        private IntPtr _texture, _view;
+        internal IntPtr ViewPtr => _view;
+        internal IntPtr TexturePtr => _texture;
         public int Width { get; private set; }
         public int Height { get; private set; }
 
-        private bool _Disposed;
+        private bool _disposed;
 
         internal Texture2D(LightDevice device, IntPtr tex, IntPtr view, int w, int h)
         {
-            _Device = device;
+            _device = device;
             device.AddComponent(this);
 
-            _Texture = tex;
-            _View = view;
+            _texture = tex;
+            _view = view;
 
             Width = w;
             Height = h;
@@ -37,16 +37,16 @@ namespace LightDx
 
         public void Dispose()
         {
-            if (_Disposed)
+            if (_disposed)
             {
                 return;
             }
 
-            NativeHelper.Dispose(ref _Texture);
-            NativeHelper.Dispose(ref _View);
+            NativeHelper.Dispose(ref _texture);
+            NativeHelper.Dispose(ref _view);
 
-            _Disposed = true;
-            _Device.RemoveComponent(this);
+            _disposed = true;
+            _device.RemoveComponent(this);
             GC.SuppressFinalize(this);
         }
     }

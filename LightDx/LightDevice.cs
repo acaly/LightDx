@@ -20,23 +20,23 @@ namespace LightDx
             public volatile bool Stop;
         }
 
-        private Control _Ctrl;
-        private int _Width, _Height;
-        private IntPtr _Device, _Swapchain, _Context;
-        private IntPtr _Output;
-        private IntPtr _DefaultRenderView;
+        private Control _ctrl;
+        private int _width, _height;
+        private IntPtr _device, _swapchain, _context;
+        private IntPtr _output;
+        private IntPtr _defaultRenderView;
 
-        internal IntPtr DevicePtr => _Device;
-        internal IntPtr ContextPtr => _Context;
+        internal IntPtr DevicePtr => _device;
+        internal IntPtr ContextPtr => _context;
 
-        internal int WindowWidth => _Width;
-        internal int WindowHeight => _Height;
+        internal int WindowWidth => _width;
+        internal int WindowHeight => _height;
 
-        private IntPtr _DepthStencilView;
+        private IntPtr _depthStencilView;
 
-        private List<WeakReference<IDisposable>> _Components = new List<WeakReference<IDisposable>>();
+        private List<WeakReference<IDisposable>> _components = new List<WeakReference<IDisposable>>();
 
-        private volatile MultithreadLoop _CurrentLoop;
+        private volatile MultithreadLoop _currentLoop;
 
         private LightDevice()
         {
@@ -49,11 +49,11 @@ namespace LightDx
 
         private void TryReleaseAll()
         {
-            while (_Components.Count != 0)
+            while (_components.Count != 0)
             {
-                var index = _Components.Count - 1;
-                var c = _Components[index];
-                _Components.RemoveAt(index);
+                var index = _components.Count - 1;
+                var c = _components[index];
+                _components.RemoveAt(index);
 
                 IDisposable cobj;
                 if (c.TryGetTarget(out cobj))
@@ -61,27 +61,27 @@ namespace LightDx
                     cobj.Dispose();
                 }
             }
-            _Components.Clear();
-            NativeHelper.Dispose(ref _DepthStencilView);
-            NativeHelper.Dispose(ref _DefaultRenderView);
-            NativeHelper.Dispose(ref _Output);
-            NativeHelper.Dispose(ref _Context);
-            NativeHelper.Dispose(ref _Swapchain);
-            NativeHelper.Dispose(ref _Device);
+            _components.Clear();
+            NativeHelper.Dispose(ref _depthStencilView);
+            NativeHelper.Dispose(ref _defaultRenderView);
+            NativeHelper.Dispose(ref _output);
+            NativeHelper.Dispose(ref _context);
+            NativeHelper.Dispose(ref _swapchain);
+            NativeHelper.Dispose(ref _device);
         }
 
         internal void AddComponent(IDisposable obj)
         {
-            _Components.Add(new WeakReference<IDisposable>(obj));
+            _components.Add(new WeakReference<IDisposable>(obj));
         }
 
         internal void RemoveComponent(IDisposable obj)
         {
-            for (int i = 0; i < _Components.Count; ++i)
+            for (int i = 0; i < _components.Count; ++i)
             {
-                if (_Components[i].TryGetTarget(out var c) && c == obj)
+                if (_components[i].TryGetTarget(out var c) && c == obj)
                 {
-                    _Components.RemoveAt(i);
+                    _components.RemoveAt(i);
                     return;
                 }
             }
@@ -96,9 +96,9 @@ namespace LightDx
                 var width = ctrl.ClientSize.Width;
                 var height = ctrl.ClientSize.Height;
 
-                ret._Ctrl = ctrl;
-                ret._Width = width;
-                ret._Height = height;
+                ret._ctrl = ctrl;
+                ret._width = width;
+                ret._height = height;
             }
 
             try
@@ -106,16 +106,16 @@ namespace LightDx
                 //create core objects
                 IntPtr swapChain, device, immediateContext;
                 {
-                    var d = new SwapChainDescription(ctrl.Handle, ret._Width, ret._Height);
+                    var d = new SwapChainDescription(ctrl.Handle, ret._width, ret._height);
 
                     uint featureLevel;
                     Native.D3D11CreateDeviceAndSwapChain(
                         IntPtr.Zero, 1, IntPtr.Zero, 0, IntPtr.Zero, 0, 7, ref d,
                         out swapChain, out device, out featureLevel, out immediateContext).Check();
 
-                    ret._Device = device;
-                    ret._Swapchain = swapChain;
-                    ret._Context = immediateContext;
+                    ret._device = device;
+                    ret._swapchain = swapChain;
+                    ret._context = immediateContext;
                 }
 
                 //get default render target
@@ -126,7 +126,7 @@ namespace LightDx
                         SwapChain.GetBuffer(swapChain, 0, Guids.Texture2D, out backBuffer.Ptr).Check();
                         Device.CreateRenderTargetView(device, backBuffer.Ptr, IntPtr.Zero, out renderView).Check();
                     }
-                    ret._DefaultRenderView = renderView;
+                    ret._defaultRenderView = renderView;
                 }
 
                 //get DXGI.Output
@@ -137,7 +137,7 @@ namespace LightDx
                     Factory.GetAdapter(factory.Ptr, 0, out adapter.Ptr).Check();
                     Adapter.GetOutput(adapter.Ptr, 0, out output.Ptr).Check();
 
-                    ret._Output = output.Move();
+                    ret._output = output.Move();
                 }
             }
             catch (NativeException e)
@@ -152,8 +152,8 @@ namespace LightDx
         {
             Texture2DDescription depth = new Texture2DDescription
             {
-                Width = (uint)_Width,
-                Height = (uint)_Height,
+                Width = (uint)_width,
+                Height = (uint)_height,
                 MipLevels = 1,
                 ArraySize = 1,
                 Format = 20, //DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
@@ -166,19 +166,19 @@ namespace LightDx
             };
             using (ComScopeGuard depthTex = new ComScopeGuard(), depthView = new ComScopeGuard())
             {
-                Device.CreateTexture2D(_Device, ref depth, IntPtr.Zero, out depthTex.Ptr).Check();
-                Device.CreateDepthStencilView(_Device, depthTex.Ptr, IntPtr.Zero, out depthView.Ptr).Check();
-                this._DepthStencilView = depthView.Move();
+                Device.CreateTexture2D(_device, ref depth, IntPtr.Zero, out depthTex.Ptr).Check();
+                Device.CreateDepthStencilView(_device, depthTex.Ptr, IntPtr.Zero, out depthView.Ptr).Check();
+                this._depthStencilView = depthView.Move();
             }
         }
 
         private IntPtr GetDefaultDepthStencil()
         {
-            if (_DepthStencilView == null)
+            if (_depthStencilView == null)
             {
                 CreateDepthStencil();
             }
-            return _DepthStencilView;
+            return _depthStencilView;
         }
 
         public void Dispose()
@@ -189,7 +189,7 @@ namespace LightDx
 
         public RenderTarget CreateDefaultTarget(bool useDepthStencil)
         {
-            return new RenderTarget(this, new[] { _DefaultRenderView.AddRef() },
+            return new RenderTarget(this, new[] { _defaultRenderView.AddRef() },
                 useDepthStencil ? GetDefaultDepthStencil().AddRef() : IntPtr.Zero);
         }
 
@@ -209,7 +209,7 @@ namespace LightDx
                     {
                         blob.Ptr = Compile(codePtr, shaderCode.Length,
                             CompilerStringConstants.VS, CompilerStringConstants.vs_4_0);
-                        Device.CreateVertexShader(_Device,
+                        Device.CreateVertexShader(_device,
                             Blob.GetBufferPointer(blob.Ptr), Blob.GetBufferSize(blob.Ptr), IntPtr.Zero, out vertexShader.Ptr);
                         Native.D3DGetInputSignatureBlob(
                             Blob.GetBufferPointer(blob.Ptr), Blob.GetBufferSize(blob.Ptr), out signatureBlob.Ptr);
@@ -218,21 +218,21 @@ namespace LightDx
                     {
                         blob.Ptr = Compile(codePtr, shaderCode.Length,
                             CompilerStringConstants.GS, CompilerStringConstants.gs_4_0);
-                        Device.CreateGeometryShader(_Device, Blob.GetBufferPointer(blob.Ptr), Blob.GetBufferSize(blob.Ptr),
+                        Device.CreateGeometryShader(_device, Blob.GetBufferPointer(blob.Ptr), Blob.GetBufferSize(blob.Ptr),
                             IntPtr.Zero, out geometryShader.Ptr);
                     }
                     using(var blob = new ComScopeGuard())
                     {
                         blob.Ptr = Compile(codePtr, shaderCode.Length,
                             CompilerStringConstants.PS, CompilerStringConstants.ps_4_0);
-                        Device.CreatePixelShader(_Device, Blob.GetBufferPointer(blob.Ptr), Blob.GetBufferSize(blob.Ptr),
+                        Device.CreatePixelShader(_device, Blob.GetBufferPointer(blob.Ptr), Blob.GetBufferSize(blob.Ptr),
                             IntPtr.Zero, out pixelShader.Ptr);
                     }
                 } //fixed codePtr
 
                 return new Pipeline(this,
                     vertexShader.Move(), geometryShader.Move(), pixelShader.Move(), signatureBlob.Move(),
-                    new Viewport { Width = _Width, Height = _Height, MaxDepth = 1.0f },
+                    new Viewport { Width = _width, Height = _height, MaxDepth = 1.0f },
                     topology);
             } //using
         }
@@ -264,7 +264,7 @@ namespace LightDx
             using (ComScopeGuard tex = new ComScopeGuard(), view = new ComScopeGuard())
             {
                 tex.Ptr = InternalCreateTexture2D(bitmap);
-                Device.CreateShaderResourceView(_Device, tex.Ptr, IntPtr.Zero, out view.Ptr).Check();
+                Device.CreateShaderResourceView(_device, tex.Ptr, IntPtr.Zero, out view.Ptr).Check();
                 return new Texture2D(this, tex.Move(), view.Move(), bitmap.Width, bitmap.Height);
             }
         }
@@ -303,7 +303,7 @@ namespace LightDx
                 SysMemPitch = (uint)locked.Stride,
             };
             
-            Device.CreateTexture2D(_Device, ref t2d, new IntPtr(&data), out var tex).Check();
+            Device.CreateTexture2D(_device, ref t2d, new IntPtr(&data), out var tex).Check();
 
             bitmap.UnlockBits(locked);
             return tex;
@@ -314,7 +314,7 @@ namespace LightDx
             using (ComScopeGuard tex = new ComScopeGuard(), view = new ComScopeGuard())
             {
                 tex.Ptr = InternalCreateTexture2D(width, height, format);
-                Device.CreateShaderResourceView(_Device, tex.Ptr, IntPtr.Zero, out view.Ptr).Check();
+                Device.CreateShaderResourceView(_device, tex.Ptr, IntPtr.Zero, out view.Ptr).Check();
                 return new Texture2D(this, tex.Move(), view.Move(), width, height);
             }
         }
@@ -336,7 +336,7 @@ namespace LightDx
                 MiscFlags = 0,
             };
 
-            Device.CreateTexture2D(_Device, ref t2d, IntPtr.Zero, out var tex).Check();
+            Device.CreateTexture2D(_device, ref t2d, IntPtr.Zero, out var tex).Check();
             
             return tex;
         }
@@ -400,9 +400,9 @@ namespace LightDx
         {
             if (vsync)
             {
-                Output.WaitForVerticalBlank(_Output);
+                Output.WaitForVerticalBlank(_output);
             }
-            SwapChain.Present(_Swapchain, 0, 0);
+            SwapChain.Present(_swapchain, 0, 0);
         }
 
         public void DoEvents()
@@ -467,8 +467,8 @@ namespace LightDx
         public void RunLoop(Action frame)
         {
             MultithreadLoop loop = new MultithreadLoop();
-            _CurrentLoop = loop;
-            while (_CurrentLoop == loop && !loop.Stop && _Ctrl.Visible)
+            _currentLoop = loop;
+            while (_currentLoop == loop && !loop.Stop && _ctrl.Visible)
             {
                 frame();
                 DoEvents();
@@ -478,16 +478,16 @@ namespace LightDx
         public void RunMultithreadLoop(Action frame)
         {
             MultithreadLoop loop = new MultithreadLoop();
-            _CurrentLoop = loop;
+            _currentLoop = loop;
             var th = new Thread(delegate()
             {
-                while (_CurrentLoop == loop && !loop.Stop)
+                while (_currentLoop == loop && !loop.Stop)
                 {
                     frame();
                 }
             });
             th.Start();
-            while (_Ctrl.Visible && th.ThreadState == ThreadState.Running)
+            while (_ctrl.Visible && th.ThreadState == ThreadState.Running)
             {
                 DoEvents();
                 Thread.Sleep(100);
@@ -498,7 +498,7 @@ namespace LightDx
 
         public void StopLoop()
         {
-            var loop = _CurrentLoop;
+            var loop = _currentLoop;
             if (loop == null)
             {
                 return;

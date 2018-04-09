@@ -9,16 +9,16 @@ namespace LightDx
 {
     public class Blender
     {
-        private readonly bool _Alpha;
+        private readonly bool _alpha;
 
         private Blender(bool alpha)
         {
-            _Alpha = alpha;
+            _alpha = alpha;
         }
 
         internal unsafe IntPtr CreateBlenderForDevice(LightDevice device)
         {
-            if (!_Alpha)
+            if (!_alpha)
             {
                 return IntPtr.Zero;
             }

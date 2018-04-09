@@ -15,32 +15,32 @@ namespace LightDx
             UpdateMinTime = 50;
             UpdateFrame = 30;
 
-            _Count = 0;
-            _Clock = new Stopwatch();
+            _count = 0;
+            _clock = new Stopwatch();
         }
         
         public int UpdateMaxTime { get; set; }
         public int UpdateMinTime { get; set; }
         public int UpdateFrame { get; set; }
-        private int _Count;
-        private Stopwatch _Clock;
-        private long _LastTick;
-        private long _FpsStartTick;
+        private int _count;
+        private Stopwatch _clock;
+        private long _lastTick;
+        private long _fpsStartTick;
 
         public void Start()
         {
-            _Clock.Start();
+            _clock.Start();
         }
 
         public float NextFrame()
         {
-            _Count += 1;
-            var tick = _Clock.ElapsedTicks;
-            var ret = (tick - _LastTick) / (float)TimeSpan.TicksPerMillisecond;
-            _LastTick = tick;
+            _count += 1;
+            var tick = _clock.ElapsedTicks;
+            var ret = (tick - _lastTick) / (float)TimeSpan.TicksPerMillisecond;
+            _lastTick = tick;
 
-            var ms = (tick - _FpsStartTick) / TimeSpan.TicksPerMillisecond;
-            if (ms > UpdateMaxTime || _Count >= UpdateFrame && ms > UpdateMinTime)
+            var ms = (tick - _fpsStartTick) / TimeSpan.TicksPerMillisecond;
+            if (ms > UpdateMaxTime || _count >= UpdateFrame && ms > UpdateMinTime)
             {
                 Update();
             }
@@ -50,9 +50,9 @@ namespace LightDx
 
         private void Update()
         {
-            Fps = (float)_Count / (_Clock.ElapsedTicks - _FpsStartTick) * TimeSpan.TicksPerSecond;
-            _Count = 0;
-            _FpsStartTick = _Clock.ElapsedTicks;
+            Fps = (float)_count / (_clock.ElapsedTicks - _fpsStartTick) * TimeSpan.TicksPerSecond;
+            _count = 0;
+            _fpsStartTick = _clock.ElapsedTicks;
         }
 
         public float Fps { get; private set; }

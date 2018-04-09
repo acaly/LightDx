@@ -8,12 +8,12 @@ namespace LightDx
 {
     public abstract class AbstractPipelineConstant : IDisposable
     {
-        private IntPtr _Buffer;
+        private IntPtr _buffer;
         public readonly int Slot;
 
         protected AbstractPipelineConstant(IntPtr buffer, int slot)
         {
-            _Buffer = buffer;
+            _buffer = buffer;
             Slot = slot;
         }
 
@@ -21,7 +21,7 @@ namespace LightDx
 
         public void Dispose()
         {
-            NativeHelper.Dispose(ref _Buffer);
+            NativeHelper.Dispose(ref _buffer);
         }
     }
 
