@@ -27,7 +27,8 @@ are not tested.
 Nuget package ```LightDx``` is available now. (Only .NET Framework 4.7 is supported.)
 
 # Example
-See projects in the [Examples](Examples) folder.
+See projects in the [Examples](Examples) folder. 
+See [ImGuiOnLightDx](https://github.com/acaly/ImGuiOnLightDx) for support for ImGui.NET.
 
 # TODO
 
