@@ -29,6 +29,9 @@ namespace LightDx
         internal IntPtr DevicePtr => _Device;
         internal IntPtr ContextPtr => _Context;
 
+        internal int WindowWidth => _Width;
+        internal int WindowHeight => _Height;
+
         private IntPtr _DepthStencilView;
 
         private List<WeakReference<IDisposable>> _Components = new List<WeakReference<IDisposable>>();

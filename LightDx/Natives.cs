@@ -338,7 +338,7 @@ namespace LightDx.Natives
         public static readonly MapDelegate Map =
             CalliGenerator.GetCalliDelegate<MapDelegate>(14);
         
-        public unsafe delegate uint UnmapDelegate(IntPtr @this,
+        public unsafe delegate void UnmapDelegate(IntPtr @this,
             IntPtr r, int subres);
         public static readonly UnmapDelegate Unmap =
             CalliGenerator.GetCalliDelegate<UnmapDelegate>(15);

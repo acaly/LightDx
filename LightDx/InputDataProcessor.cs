@@ -99,7 +99,7 @@ namespace LightDx
 
             _CopyArrayMethod(ret.pSysMem, data, Size * data.Length);
 
-            DeviceContext.Unmap(_Device.ContextPtr, buffer.BufferPtr, 0).Check();
+            DeviceContext.Unmap(_Device.ContextPtr, buffer.BufferPtr, 0);
         }
 
         internal static InputElementDescription[] CreateLayoutFromType()
@@ -119,6 +119,14 @@ namespace LightDx
                 else if (field.FieldType == typeof(Float4))
                 {
                     format = 2; //R32G32B32A32_Float
+                }
+                else if (field.FieldType == typeof(Float2))
+                {
+                    format = 16; //DXGI_FORMAT_R32G32_FLOAT
+                }
+                else if (field.FieldType == typeof(uint))
+                {
+                    format = 30; //DXGI_FORMAT_R8G8B8A8_UINT
                 }
                 else
                 {

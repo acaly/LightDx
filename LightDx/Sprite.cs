@@ -9,6 +9,8 @@ namespace LightDx
 {
     //TODO specify address and filtering options (at startup)
     //TODO make a DeviceChild class?
+    //TODO use Device.WindowWidth, WindowHeight instead of 400 and 300
+    //TODO support color
     public class Sprite : IDisposable
     {
         private struct Vertex

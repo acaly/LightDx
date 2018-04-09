@@ -7,6 +7,17 @@ using System.Threading.Tasks;
 
 namespace LightDx
 {
+    public struct Float2
+    {
+        public float X, Y;
+
+        public Float2(float x, float y)
+        {
+            X = x;
+            Y = y;
+        }
+    }
+
     public struct Float4
     {
         public float X, Y, Z, W;

@@ -58,7 +58,7 @@ namespace LightDx
                 CopyArray32(ret.pSysMem, (uint[])data, 4 * data.Length);
             }
 
-            DeviceContext.Unmap(_Device.ContextPtr, _Ptr, 0).Check();
+            DeviceContext.Unmap(_Device.ContextPtr, _Ptr, 0);
         }
 
         public void DrawAll(InputBuffer vertex)

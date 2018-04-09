@@ -69,7 +69,7 @@
     <Compile Include="CalliGenerator.cs" />
     <Compile Include="ComScopeGuard.cs" />
     <Compile Include="DepthTest.cs" />
-    <Compile Include="Float4.cs" />
+    <Compile Include="Vectors.cs" />
     <Compile Include="FrameCounter.cs" />
     <Compile Include="IndexBuffer.cs" />
     <Compile Include="InputAttributes.cs" />
