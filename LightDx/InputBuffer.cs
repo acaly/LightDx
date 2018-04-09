@@ -14,7 +14,8 @@ namespace LightDx
         //support only one buffer
         private IntPtr _Buffer;
         private IntPtr _Layout;
-        private uint _Stride, _VertexCount;
+        private uint _Stride;
+        private int _VertexCount;
 
         private bool _Disposed;
 
@@ -27,7 +28,7 @@ namespace LightDx
             _Buffer = buffer;
             _Layout = layout;
             _Stride = (uint)stride;
-            _VertexCount = (uint)vertexCount;
+            _VertexCount = vertexCount;
         }
 
         ~InputBuffer()
@@ -59,8 +60,7 @@ namespace LightDx
 
         public void DrawAll()
         {
-            Bind();
-            DeviceContext.Draw(_Device.ContextPtr, _VertexCount, 0);
+            Draw(0, _VertexCount);
         }
 
         public void Draw(int vertexOffset, int vertexCount)

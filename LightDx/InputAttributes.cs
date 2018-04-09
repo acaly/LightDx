@@ -29,8 +29,7 @@ namespace LightDx.InputAttributes
             get { return POSITION; }
         }
     }
-
-    //Only supports R32G32B32A32_Float color.
+    
     public class ColorAttribute : InputAttribute
     {
         public ColorAttribute(int id = 0)

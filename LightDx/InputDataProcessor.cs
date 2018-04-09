@@ -19,23 +19,12 @@ namespace LightDx
 
         private bool _Disposed;
 
-        private Device.CreateBufferDelegate_SetPtr<T> _CreateBufferMethod;
-        private DeviceContext.UpdateSubresourceDelegate<T> _UpdateSubresourceMethod;
-        private delegate void CopyArrayDelegate(IntPtr ptr, T[] array, int nbytes);
-        private CopyArrayDelegate _CopyArrayMethod;
-
         internal InputDataProcessor(LightDevice device, IntPtr layout)
         {
             _Device = device;
             device.AddComponent(this);
 
             _InputLayout = layout;
-
-            _CreateBufferMethod = CalliGenerator.GetCalliDelegate_Device_CreateBuffer
-                <Device.CreateBufferDelegate_SetPtr<T>, T>(3, 2);
-            _UpdateSubresourceMethod = CalliGenerator.GetCalliDelegate_PinArray
-                <DeviceContext.UpdateSubresourceDelegate<T>, T>(48, 4);
-            _CopyArrayMethod = CalliGenerator.GenerateMemCopy<CopyArrayDelegate, T>();
         }
 
         ~InputDataProcessor()
@@ -63,7 +52,7 @@ namespace LightDx
             };
             using (var vb = new ComScopeGuard())
             {
-                _CreateBufferMethod(_Device.DevicePtr, &bd, &box, out vb.Ptr, data).Check();
+                StructArrayHelper<T>.CreateBuffer(_Device.DevicePtr, &bd, &box, out vb.Ptr, data).Check();
                 return new InputBuffer(_Device, vb.Move(), _InputLayout.AddRef(), Size, realLength);
             }
         }
@@ -88,7 +77,7 @@ namespace LightDx
 
         public unsafe void UpdateBuffer(InputBuffer buffer, T[] data)
         {
-            _UpdateSubresourceMethod(_Device.ContextPtr, buffer.BufferPtr, 0, null, data, 0, 0).Check();
+            StructArrayHelper<T>.UpdateSubresource(_Device.ContextPtr, buffer.BufferPtr, 0, null, data, 0, 0).Check();
         }
 
         public unsafe void UpdateBufferDynamic(InputBuffer buffer, T[] data)
@@ -97,7 +86,7 @@ namespace LightDx
             DeviceContext.Map(_Device.ContextPtr, buffer.BufferPtr, 0,
                 4 /* WRITE_DISCARD */, 0, &ret).Check();
 
-            _CopyArrayMethod(ret.pSysMem, data, Size * data.Length);
+            StructArrayHelper<T>.CopyArray(ret.pSysMem, data, Size * data.Length);
 
             DeviceContext.Unmap(_Device.ContextPtr, buffer.BufferPtr, 0);
         }

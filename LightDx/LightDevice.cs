@@ -341,18 +341,10 @@ namespace LightDx
             return tex;
         }
 
-        private Device.CreateBufferDelegate_SetPtr<uint> _CreateBufferMethod32 =
-            CalliGenerator.GetCalliDelegate_Device_CreateBuffer
-                <Device.CreateBufferDelegate_SetPtr<uint>, uint>(3, 2);
-        private Device.CreateBufferDelegate_SetPtr<ushort> _CreateBufferMethod16 =
-            CalliGenerator.GetCalliDelegate_Device_CreateBuffer
-                <Device.CreateBufferDelegate_SetPtr<ushort>, ushort>(3, 2);
-
         public unsafe IndexBuffer CreateImmutableIndexBuffer(Array data, int offset = 0, int length = -1)
         {
-            //TODO type check
             int realLength = length == -1 ? data.Length - offset : length;
-            int indexSize = data is ushort[] ? 2 : 4;
+            int indexSize = data is ushort[] ? 2 : data is uint[] ? 4 : throw new ArgumentException(nameof(data));
             BufferDescription bd = new BufferDescription()
             {
                 ByteWidth = (uint)(indexSize * realLength),
@@ -372,11 +364,11 @@ namespace LightDx
             {
                 if (indexSize == 2)
                 {
-                    _CreateBufferMethod16(DevicePtr, &bd, &box, out vb.Ptr, (ushort[])data).Check();
+                    StructArrayHelper<ushort>.CreateBuffer(DevicePtr, &bd, &box, out vb.Ptr, (ushort[])data).Check();
                 }
                 else
                 {
-                    _CreateBufferMethod32(DevicePtr, &bd, &box, out vb.Ptr, (uint[])data).Check();
+                    StructArrayHelper<uint>.CreateBuffer(DevicePtr, &bd, &box, out vb.Ptr, (uint[])data).Check();
                 }
                 return new IndexBuffer(this, vb.Move(), indexSize * 8, realLength);
             }
@@ -384,7 +376,10 @@ namespace LightDx
 
         public unsafe IndexBuffer CreateDynamicIndexBuffer(int bitWidth, int size)
         {
-            //TODO check bitWidth
+            if (bitWidth != 16 && bitWidth != 32)
+            {
+                throw new ArgumentOutOfRangeException(nameof(bitWidth));
+            }
             BufferDescription bd = new BufferDescription()
             {
                 ByteWidth = (uint)(bitWidth / 8 * size),
