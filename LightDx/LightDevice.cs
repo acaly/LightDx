@@ -397,7 +397,7 @@ namespace LightDx
             using (var vb = new ComScopeGuard())
             {
                 Device.CreateBuffer(DevicePtr, &bd, null, out vb.Ptr).Check();
-                return new IndexBuffer(this, vb.Move(), bitWidth / 8, size);
+                return new IndexBuffer(this, vb.Move(), bitWidth, size);
             }
         }
 

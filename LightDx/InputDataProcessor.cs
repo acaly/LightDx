@@ -126,7 +126,7 @@ namespace LightDx
                 }
                 else if (field.FieldType == typeof(uint))
                 {
-                    format = 30; //DXGI_FORMAT_R8G8B8A8_UINT
+                    format = 28; //DXGI_FORMAT_R8G8B8A8_UNORM
                 }
                 else
                 {
