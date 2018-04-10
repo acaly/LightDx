@@ -152,7 +152,11 @@ namespace LightDx
             {
                 return maxX;
             }
-            DrawTexture(b.Bitmap, x, y, b.Width, b.Height, b.X, b.Y, b.Width, b.Height);
+            if (b.Bitmap != null)
+            {
+                //Non-space character
+                DrawTexture(b.Bitmap, x, y, b.Width, b.Height, b.X, b.Y, b.Width, b.Height);
+            }
             return x + ax;
         }
 
