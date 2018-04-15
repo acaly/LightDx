@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TextureTriangle", "Examples
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DrawString", "Examples\DrawString\DrawString.csproj", "{FE9BD09A-74E5-4ED8-BD61-1A9F128E5DA0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DynamicTriangle", "Examples\DynamicTriangle\DynamicTriangle.csproj", "{D0E73992-784B-4F38-9198-4E08A7BAF8AE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -53,6 +55,14 @@ Global
 		{FE9BD09A-74E5-4ED8-BD61-1A9F128E5DA0}.Release|Any CPU.Build.0 = Release|Any CPU
 		{FE9BD09A-74E5-4ED8-BD61-1A9F128E5DA0}.Release|x64.ActiveCfg = Release|Any CPU
 		{FE9BD09A-74E5-4ED8-BD61-1A9F128E5DA0}.Release|x64.Build.0 = Release|Any CPU
+		{D0E73992-784B-4F38-9198-4E08A7BAF8AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D0E73992-784B-4F38-9198-4E08A7BAF8AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D0E73992-784B-4F38-9198-4E08A7BAF8AE}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D0E73992-784B-4F38-9198-4E08A7BAF8AE}.Debug|x64.Build.0 = Debug|Any CPU
+		{D0E73992-784B-4F38-9198-4E08A7BAF8AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D0E73992-784B-4F38-9198-4E08A7BAF8AE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D0E73992-784B-4F38-9198-4E08A7BAF8AE}.Release|x64.ActiveCfg = Release|Any CPU
+		{D0E73992-784B-4F38-9198-4E08A7BAF8AE}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -61,6 +71,7 @@ Global
 		{B35FE686-B955-4C7A-AA7F-BA1FF5185674} = {8A9515FE-6CCF-4B80-9A37-87C2C3583424}
 		{69D3CBDE-6740-4199-96EC-622240537C8A} = {8A9515FE-6CCF-4B80-9A37-87C2C3583424}
 		{FE9BD09A-74E5-4ED8-BD61-1A9F128E5DA0} = {8A9515FE-6CCF-4B80-9A37-87C2C3583424}
+		{D0E73992-784B-4F38-9198-4E08A7BAF8AE} = {8A9515FE-6CCF-4B80-9A37-87C2C3583424}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {7448F4E7-EE62-47E7-92EA-7833EE840AA1}

@@ -214,7 +214,8 @@ namespace LightDx
             var invokeTypes = new[]
             {
                 typeof(IntPtr),
-                arrayType,
+                typeof(Array),
+                typeof(int),
                 typeof(int),
             };
 
@@ -224,17 +225,25 @@ namespace LightDx
 
             // Generate the pinned local
             generator.DeclareLocal(arrayType, true);
+            generator.DeclareLocal(typeof(void*), false);
 
-            // Pin the array
+            // Pin the array (loc0)
             generator.Emit(OpCodes.Ldarg_1);
             generator.Emit(OpCodes.Ldc_I4_0);
             generator.Emit(OpCodes.Ldelema, typeof(TArray));
             generator.Emit(OpCodes.Stloc_0);
 
-            // Copy
-            generator.Emit(OpCodes.Ldarg_0);
+            // Calculate effective address (loc1)
             generator.Emit(OpCodes.Ldloc_0);
             generator.Emit(OpCodes.Ldarg_2);
+            generator.Emit(OpCodes.Conv_I);
+            generator.Emit(OpCodes.Add);
+            generator.Emit(OpCodes.Stloc_1);
+
+            // Copy
+            generator.Emit(OpCodes.Ldarg_0);
+            generator.Emit(OpCodes.Ldloc_1);
+            generator.Emit(OpCodes.Ldarg_3);
             generator.Emit(OpCodes.Cpblk);
             
             generator.Emit(OpCodes.Ret);

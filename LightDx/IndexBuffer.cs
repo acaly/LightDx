@@ -38,18 +38,19 @@ namespace LightDx
                 _bitWidth == 16 ? 57u /* DXGI_FORMAT_R16_UINT */ : 42u /* DXGI_FORMAT_R32_UINT */, 0);
         }
 
-        public unsafe void UpdateDynamic(Array data)
+        public unsafe void UpdateDynamic(Array data, int startIndex = 0, int length = -1)
         {
+            int realLength = length == -1 ? data.Length - startIndex : length;
             SubresourceData ret;
             DeviceContext.Map(_device.ContextPtr, _ptr, 0, 4 /* WRITE_DISCARD */, 0, &ret).Check();
 
             if (_bitWidth == 16)
             {
-                StructArrayHelper<ushort>.CopyArray(ret.pSysMem, (ushort[])data, 2 * data.Length);
+                StructArrayHelper<ushort>.CopyArray(ret.pSysMem, data, 2 * startIndex, 2 * realLength);
             }
             else if (_bitWidth == 32)
             {
-                StructArrayHelper<uint>.CopyArray(ret.pSysMem, (uint[])data, 4 * data.Length);
+                StructArrayHelper<uint>.CopyArray(ret.pSysMem, data, 4 * startIndex, 4 * realLength);
             }
 
             DeviceContext.Unmap(_device.ContextPtr, _ptr, 0);

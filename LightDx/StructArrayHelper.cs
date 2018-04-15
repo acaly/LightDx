@@ -11,7 +11,7 @@ namespace LightDx
     {
         public static readonly Device.CreateBufferDelegate_SetPtr<T> CreateBuffer;
         public static readonly DeviceContext.UpdateSubresourceDelegate<T> UpdateSubresource;
-        public delegate void CopyArrayDelegate(IntPtr ptr, T[] array, int nbytes);
+        public delegate void CopyArrayDelegate(IntPtr ptr, Array array, int offsetBytes, int nbytes);
         public static readonly CopyArrayDelegate CopyArray;
 
         static StructArrayHelper()

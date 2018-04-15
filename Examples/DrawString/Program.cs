@@ -9,7 +9,7 @@ using System.Windows.Forms;
 
 namespace DrawString
 {
-    class Program
+    static class Program
     {
         [STAThread]
         static void Main(string[] args)

@@ -80,13 +80,14 @@ namespace LightDx
             StructArrayHelper<T>.UpdateSubresource(_device.ContextPtr, buffer.BufferPtr, 0, null, data, 0, 0).Check();
         }
 
-        public unsafe void UpdateBufferDynamic(InputBuffer buffer, T[] data)
+        public unsafe void UpdateBufferDynamic(InputBuffer buffer, T[] data, int start = 0, int length = -1)
         {
+            int realLength = length == -1 ? data.Length - start : length;
             SubresourceData ret;
             DeviceContext.Map(_device.ContextPtr, buffer.BufferPtr, 0,
                 4 /* WRITE_DISCARD */, 0, &ret).Check();
 
-            StructArrayHelper<T>.CopyArray(ret.pSysMem, data, _Size * data.Length);
+            StructArrayHelper<T>.CopyArray(ret.pSysMem, data, _Size * start, _Size * realLength);
 
             DeviceContext.Unmap(_device.ContextPtr, buffer.BufferPtr, 0);
         }
