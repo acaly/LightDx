@@ -24,6 +24,7 @@ namespace LightDx
         private bool _disposed;
 
         private Control _ctrl;
+        private Form _form;
         private int _width, _height;
         private IntPtr _device, _swapchain, _context;
         private IntPtr _output;
@@ -40,9 +41,13 @@ namespace LightDx
         private List<WeakReference<IDisposable>> _components = new List<WeakReference<IDisposable>>();
 
         private volatile MultithreadLoop _currentLoop;
+        private AutoResetEvent _ctrlResized = new AutoResetEvent(false);
 
         internal Pipeline CurrentPipeline { get; set; }
 
+        public bool AutoResize { get; set; } = true;
+        public event EventHandler ResolutionChanged;
+        
         private LightDevice()
         {
         }
@@ -59,6 +64,8 @@ namespace LightDx
                 return;
             }
             _disposing = true;
+            
+            RemoveEventHandlers();
 
             while (_components.Count != 0)
             {
@@ -108,16 +115,17 @@ namespace LightDx
             }
         }
 
-        public static LightDevice Create(Control ctrl)
+        public static LightDevice Create(Control ctrl, int initWidth = -1, int initHeight = -1)
         {
             var ret = new LightDevice();
 
             //initialize size
             {
-                var width = ctrl.ClientSize.Width;
-                var height = ctrl.ClientSize.Height;
+                var width = initWidth == -1 ? ctrl.ClientSize.Width : initWidth;
+                var height = initHeight == -1 ? ctrl.ClientSize.Height : initHeight;
 
                 ret._ctrl = ctrl;
+                ret._form = ctrl.FindForm();
                 ret._width = width;
                 ret._height = height;
             }
@@ -165,6 +173,7 @@ namespace LightDx
                 ret.ReleaseAll();
                 throw e;
             }
+            ret.AddEventHandlers();
             return ret;
         }
 
@@ -204,6 +213,16 @@ namespace LightDx
         public void Dispose()
         {
             ReleaseAll();
+        }
+
+        public void ChangeResolution(int width, int height)
+        {
+            _width = width;
+            _height = height;
+            
+            //TODO update resolution internally
+
+            ResolutionChanged?.Invoke(this, EventArgs.Empty);
         }
 
         public RenderTarget CreateDefaultTarget(bool useDepthStencil)
@@ -434,6 +453,7 @@ namespace LightDx
             _currentLoop = loop;
             while (_currentLoop == loop && !loop.Stop && _ctrl.Visible)
             {
+                CheckCtrlResize();
                 frame();
                 DoEvents();
             }
@@ -447,6 +467,7 @@ namespace LightDx
             {
                 while (_currentLoop == loop && !loop.Stop)
                 {
+                    CheckCtrlResize();
                     frame();
                 }
             });
@@ -469,5 +490,69 @@ namespace LightDx
             }
             loop.Stop = true;
         }
+
+        #region Managed Events
+
+        private bool _isInResize;
+        private volatile int _prevClientWidth, _prevClientHeight;
+
+        private void AddEventHandlers()
+        {
+            var size = _ctrl.ClientSize;
+            _prevClientWidth = size.Width;
+            _prevClientHeight = size.Height;
+
+            _ctrl.ClientSizeChanged += ControlSizeChanged;
+            _form.ResizeBegin += FormBeginResize;
+            _form.ResizeEnd += FormEndResize;
+        }
+
+        private void RemoveEventHandlers()
+        {
+            _ctrl.ClientSizeChanged -= ControlSizeChanged;
+            _form.ResizeBegin -= FormBeginResize;
+            _form.ResizeEnd -= FormEndResize;
+        }
+
+        private void FormBeginResize(object sender, EventArgs e)
+        {
+            _isInResize = true;
+        }
+
+        private void FormEndResize(object sender, EventArgs e)
+        {
+            _isInResize = false;
+            ControlSizeChanged(sender, e); //Trigger at the end
+        }
+
+        private void ControlSizeChanged(object sender, EventArgs e)
+        {
+            if (_isInResize || _form.WindowState == FormWindowState.Minimized)
+            {
+                return;
+            }
+            var newSize = _ctrl.ClientSize;
+            if (newSize != new Size(_prevClientWidth, _prevClientHeight))
+            {
+                _ctrlResized.Reset();
+                _prevClientWidth = newSize.Width;
+                _prevClientHeight = newSize.Height;
+                _ctrlResized.Set();
+            }
+        }
+
+        private void CheckCtrlResize()
+        {
+            //WaitOne(0) checks state without blocking
+            if (_ctrlResized.WaitOne(0))
+            {
+                if (AutoResize)
+                {
+                    ChangeResolution(_prevClientWidth, _prevClientHeight);
+                }
+            }
+        }
+
+        #endregion
     }
 }
