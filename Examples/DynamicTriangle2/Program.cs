@@ -79,7 +79,7 @@ namespace DynamicTriangle2
                     SetCoordinate(ref vertexData[0].Position, angle);
                     SetCoordinate(ref vertexData[1].Position, angle - distance);
                     SetCoordinate(ref vertexData[2].Position, angle + distance);
-                    input.UpdateBufferDynamic(buffer, vertexData, 0, 3);
+                    buffer.Update(vertexData);
 
                     constantBuffer.Value.Time = ((float)clock.Elapsed.TotalSeconds % 2) / 2;
                     constantBuffer.Update();

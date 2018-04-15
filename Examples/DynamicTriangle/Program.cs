@@ -74,7 +74,7 @@ namespace DynamicTriangle
                     SetCoordinate(ref vertexData[2].Position, angle + distance);
                     SetCoordinate(ref vertexData[3].Position, angle + distance / 2);
 
-                    input.UpdateBufferDynamic(buffer, vertexData, 0, 3);
+                    buffer.Update(vertexData);
 
                     target.ClearAll(Color.BlanchedAlmond);
                     indexBuffer.DrawAll(buffer);

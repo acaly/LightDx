@@ -10,12 +10,57 @@ using System.Threading.Tasks;
 
 namespace LightDx
 {
+    internal interface IBufferUpdate
+    {
+        void UpdateBuffer(InputBuffer buffer, Array data, int start, int length);
+    }
+
     public class InputDataProcessor<T> : IDisposable
         where T : struct
     {
+        private class BufferUpdate : IBufferUpdate
+        {
+            private LightDevice _device;
+            private readonly uint[] _updateSubresourceBox = new uint[] { 0, 0, 0, 0, 1, 1 };
+
+            public BufferUpdate(LightDevice device)
+            {
+                _device = device;
+            }
+
+            public void UpdateBuffer(InputBuffer buffer, Array data, int start, int length)
+            {
+                UpdateBufferInternal(buffer, (T[])data, start, length);
+            }
+
+            private unsafe void UpdateBufferInternal(InputBuffer buffer, T[] data, int start, int length)
+            {
+                int realLength = length == -1 ? data.Length - start : length;
+                if (buffer.IsDynamic)
+                {
+                    SubresourceData ret;
+                    DeviceContext.Map(_device.ContextPtr, buffer.BufferPtr, 0,
+                        4 /* WRITE_DISCARD */, 0, &ret).Check();
+
+                    StructArrayHelper<T>.CopyArray(ret.pSysMem, data, _Size * start, _Size * realLength);
+
+                    DeviceContext.Unmap(_device.ContextPtr, buffer.BufferPtr, 0);
+                }
+                else
+                {
+                    _updateSubresourceBox[3] = (uint)(realLength * _Size);
+                    fixed (uint* pBox = _updateSubresourceBox)
+                    {
+                        StructArrayHelper<T>.UpdateSubresource(_device.ContextPtr, buffer.BufferPtr, 0, pBox, ref data[start], 0, 0);
+                    }
+                }
+            }
+        }
+
         private static int _Size = Marshal.SizeOf(typeof(T));
         private readonly LightDevice _device;
         private IntPtr _inputLayout;
+        private BufferUpdate _bufferUpdate;
 
         private bool _disposed;
 
@@ -25,6 +70,7 @@ namespace LightDx
             device.AddComponent(this);
 
             _inputLayout = layout;
+            _bufferUpdate = new BufferUpdate(device);
         }
 
         ~InputDataProcessor()
@@ -53,7 +99,7 @@ namespace LightDx
             using (var vb = new ComScopeGuard())
             {
                 StructArrayHelper<T>.CreateBuffer(_device.DevicePtr, &bd, &box, out vb.Ptr, ref data[0]).Check();
-                return new InputBuffer(_device, vb.Move(), _inputLayout.AddRef(), _Size, realLength);
+                return new InputBuffer(_device, _bufferUpdate, vb.Move(), _inputLayout.AddRef(), _Size, realLength, false);
             }
         }
         
@@ -71,26 +117,8 @@ namespace LightDx
             using (var vb = new ComScopeGuard())
             {
                 Device.CreateBuffer(_device.DevicePtr, &bd, null, out vb.Ptr).Check();
-                return new InputBuffer(_device, vb.Move(), _inputLayout.AddRef(), _Size, nElement);
+                return new InputBuffer(_device, _bufferUpdate, vb.Move(), _inputLayout.AddRef(), _Size, nElement, true);
             }
-        }
-
-        //TODO use one of the following two depending on dynamic or not.
-        public unsafe void UpdateBuffer(InputBuffer buffer, T[] data)
-        {
-            StructArrayHelper<T>.UpdateSubresource(_device.ContextPtr, buffer.BufferPtr, 0, null, ref data[0], 0, 0);
-        }
-
-        public unsafe void UpdateBufferDynamic(InputBuffer buffer, T[] data, int start = 0, int length = -1)
-        {
-            int realLength = length == -1 ? data.Length - start : length;
-            SubresourceData ret;
-            DeviceContext.Map(_device.ContextPtr, buffer.BufferPtr, 0,
-                4 /* WRITE_DISCARD */, 0, &ret).Check();
-
-            StructArrayHelper<T>.CopyArray(ret.pSysMem, data, _Size * start, _Size * realLength);
-
-            DeviceContext.Unmap(_device.ContextPtr, buffer.BufferPtr, 0);
         }
 
         internal static InputElementDescription[] CreateLayoutFromType()

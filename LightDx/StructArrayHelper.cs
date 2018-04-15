@@ -14,7 +14,7 @@ namespace LightDx
             void* d, void* data, out IntPtr r, ref T dataSrc);
         //DeviceContext
         public unsafe delegate void UpdateSubresourceDelegate(IntPtr @this,
-            IntPtr r, int subres, void* box, ref T data, int p1, int p2);
+            IntPtr r, int subres, uint* box, ref T data, int p1, int p2);
 
         public static readonly CreateBufferDelegate_SetPtr CreateBuffer;
         public static readonly UpdateSubresourceDelegate UpdateSubresource;
@@ -23,7 +23,6 @@ namespace LightDx
         public delegate void CopyStructDelegate(IntPtr ptr, ref T data, int offsetBytes, int nbytes);
         public static readonly CopyStructDelegate CopyStruct;
         
-
         static StructArrayHelper()
         {
             CreateBuffer = CalliGenerator.GetCalliDelegate_Device_CreateBuffer
