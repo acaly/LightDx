@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -14,7 +15,7 @@ namespace LightDx
     }
 
     [Flags]
-    public enum ConstantBufferUsage
+    public enum ConstantUsage
     {
         VertexShader = 1,
         //other shaders not supported
@@ -35,8 +36,10 @@ namespace LightDx
         //only 1 viewport
         private Viewport _viewport;
 
-        private Dictionary<int, AbstractPipelineConstant> _constants = new Dictionary<int, AbstractPipelineConstant>();
+        private Dictionary<int, AbstractPipelineConstant> _vsConstants = new Dictionary<int, AbstractPipelineConstant>();
         private Dictionary<int, Texture2D> _resources = new Dictionary<int, Texture2D>();
+
+        private bool _isBound;
 
         internal Pipeline(LightDevice device, IntPtr v, IntPtr g, IntPtr p, IntPtr sign, Viewport vp, InputTopology topology)
         {
@@ -70,25 +73,9 @@ namespace LightDx
             NativeHelper.Dispose(ref _signatureBlob);
             NativeHelper.Dispose(ref _blendPtr);
 
-            foreach (var c in _constants)
-            {
-                c.Value.Dispose();
-            }
-            _constants.Clear();
-
             _disposed = true;
             _device.RemoveComponent(this);
             GC.SuppressFinalize(this);
-        }
-
-        public PipelineConstant<T> CreateConstantBuffer<T>(ConstantBufferUsage usage, int slot)
-            where T : struct
-        {
-            if (_disposed)
-            {
-                throw new ObjectDisposedException("Pipeline");
-            }
-            throw new NotImplementedException();
         }
 
         public unsafe InputDataProcessor<T> CreateInputDataProcessor<T>()
@@ -110,15 +97,82 @@ namespace LightDx
             }
         }
 
-        public void SetResource(int slot, Texture2D tex)
+        public unsafe IndexBuffer CreateImmutableIndexBuffer(Array data, int offset = 0, int length = -1)
         {
-            if (tex == null)
+            int realLength = length == -1 ? data.Length - offset : length;
+            int indexSize = data is ushort[] ? 2 : data is uint[] ? 4 : throw new ArgumentException(nameof(data));
+            BufferDescription bd = new BufferDescription()
             {
-                _resources.Remove(slot);
+                ByteWidth = (uint)(indexSize * realLength),
+                Usage = 0, //default
+                BindFlags = 2, //indexbuffer
+                CPUAccessFlags = 0, //none. or write (65536)
+                MiscFlags = 0,
+                StructureByteStride = (uint)indexSize,
+            };
+            DataBox box = new DataBox
+            {
+                DataPointer = null, //the pointer is set (after pinned) in _CreateBufferMethod
+                RowPitch = 0,
+                SlicePitch = 0,
+            };
+            using (var vb = new ComScopeGuard())
+            {
+                if (indexSize == 2)
+                {
+                    StructArrayHelper<ushort>.CreateBuffer(_device.DevicePtr, &bd, &box, out vb.Ptr, ref ((ushort[])data)[0]).Check();
+                }
+                else
+                {
+                    StructArrayHelper<uint>.CreateBuffer(_device.DevicePtr, &bd, &box, out vb.Ptr, ref ((uint[])data)[0]).Check();
+                }
+                return new IndexBuffer(_device, vb.Move(), indexSize * 8, realLength);
             }
-            else
+        }
+
+        public unsafe IndexBuffer CreateDynamicIndexBuffer(int bitWidth, int size)
+        {
+            if (bitWidth != 16 && bitWidth != 32)
             {
-                _resources[slot] = tex;
+                throw new ArgumentOutOfRangeException(nameof(bitWidth));
+            }
+            BufferDescription bd = new BufferDescription()
+            {
+                ByteWidth = (uint)(bitWidth / 8 * size),
+                Usage = 2, //dynamic
+                BindFlags = 2, //indexbuffer
+                CPUAccessFlags = 0x10000, //write
+                MiscFlags = 0,
+                StructureByteStride = (uint)bitWidth / 8,
+            };
+            using (var vb = new ComScopeGuard())
+            {
+                Device.CreateBuffer(_device.DevicePtr, &bd, null, out vb.Ptr).Check();
+                return new IndexBuffer(_device, vb.Move(), bitWidth, size);
+            }
+        }
+
+        public unsafe PipelineConstant<T> CreateConstantBuffer<T>()
+            where T : struct
+        {
+            if (_disposed)
+            {
+                throw new ObjectDisposedException("Pipeline");
+            }
+
+            BufferDescription bd = new BufferDescription()
+            {
+                ByteWidth = (((uint)Marshal.SizeOf<T>() + 15) & ~15u), //multiples of 16
+                Usage = 2, //dynamic
+                BindFlags = 4, //constantbuffer
+                CPUAccessFlags = 0x10000, //write
+                MiscFlags = 0,
+                StructureByteStride = 0,// (uint)(Marshal.SizeOf<T>()),
+            };
+            using (var cb = new ComScopeGuard())
+            {
+                Device.CreateBuffer(_device.DevicePtr, &bd, null, out cb.Ptr).Check();
+                return new PipelineConstant<T>(_device, cb.Move());
             }
         }
 
@@ -126,6 +180,10 @@ namespace LightDx
         {
             NativeHelper.Dispose(ref _blendPtr);
             _blendPtr = b.CreateBlenderForDevice(_device);
+            if (_isBound)
+            {
+                ApplyBlender();
+            }
         }
 
         public void SetSampler(int slot, Sampler s)
@@ -138,12 +196,34 @@ namespace LightDx
             throw new NotImplementedException();
         }
 
-        public unsafe void Apply()
+        public void SetResource(int slot, Texture2D tex)
         {
-            if (_disposed)
+            _resources[slot] = tex;
+            if (_isBound)
             {
-                throw new ObjectDisposedException("Pipeline");
+                var view = tex?.ViewPtr ?? IntPtr.Zero;
+                DeviceContext.PSSetShaderResources(_device.ContextPtr, (uint)slot, 0, ref view);
             }
+        }
+
+        public void SetConstant(ConstantUsage usage, int slot, AbstractPipelineConstant pipelineConstant)
+        {
+            switch (usage)
+            {
+                case ConstantUsage.VertexShader:
+                    _vsConstants[slot] = pipelineConstant;
+                    if (_isBound)
+                    {
+                        ApplyVSConstantBuffer(slot, pipelineConstant);
+                    }
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(usage));
+            }
+        }
+
+        private unsafe void ApplyShaders()
+        {
             DeviceContext.IASetPrimitiveTopology(_device.ContextPtr, (uint)_topology);
             DeviceContext.VSSetShader(_device.ContextPtr, _vertex, IntPtr.Zero, 0);
             DeviceContext.GSSetShader(_device.ContextPtr, _geometry, IntPtr.Zero, 0);
@@ -152,19 +232,56 @@ namespace LightDx
             {
                 DeviceContext.RSSetViewports(_device.ContextPtr, 1, ptr);
             }
-            DeviceContext.OMSetBlendState(_device.ContextPtr, _blendPtr, IntPtr.Zero, 0xFFFFFFFF);
-            //TODO Samplers
-            //TODO setup constant buffer
-            //TODO depth
-            ApplyResources();
         }
 
-        internal void ApplyResources()
+        private void ApplyBlender()
         {
+            DeviceContext.OMSetBlendState(_device.ContextPtr, _blendPtr, IntPtr.Zero, 0xFFFFFFFF);
+        }
+
+        private void ApplyPSResource(int slot, Texture2D tex)
+        {
+            IntPtr view = tex?.ViewPtr ?? IntPtr.Zero;
+            DeviceContext.PSSetShaderResources(_device.ContextPtr, (uint)slot, 1, ref view);
+        }
+
+        private void ApplyVSConstantBuffer(int slot, AbstractPipelineConstant pipelineConstant)
+        {
+            var buffer = pipelineConstant?.BuffetPtr ?? IntPtr.Zero;
+            DeviceContext.VSSetConstantBuffers(_device.ContextPtr, (uint)slot, 1, ref buffer);
+        }
+
+        public void Apply()
+        {
+            if (_disposed)
+            {
+                throw new ObjectDisposedException("Pipeline");
+            }
+
+            var prev = _device.CurrentPipeline;
+            if (prev == this)
+            {
+                return;
+            }
+            _device.CurrentPipeline = this;
+
+            if (prev != null)
+            {
+                prev._isBound = false;
+            }
+            _isBound = true;
+
+            ApplyShaders();
+            ApplyBlender();
+            //TODO Samplers
+            //TODO depth
+            foreach (var vsK in _vsConstants)
+            {
+                ApplyVSConstantBuffer(vsK.Key, vsK.Value);
+            }
             foreach (var res in _resources)
             {
-                IntPtr view = res.Value.ViewPtr;
-                DeviceContext.PSSetShaderResources(_device.ContextPtr, (uint)res.Key, 1, ref view);
+                ApplyPSResource(res.Key, res.Value);
             }
         }
     }

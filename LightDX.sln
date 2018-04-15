@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DrawString", "Examples\Draw
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DynamicTriangle", "Examples\DynamicTriangle\DynamicTriangle.csproj", "{D0E73992-784B-4F38-9198-4E08A7BAF8AE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DynamicTriangle2", "Examples\DynamicTriangle2\DynamicTriangle2.csproj", "{24251F4D-FE2C-4D3C-9ADE-2E5DF470B2F8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -63,6 +65,14 @@ Global
 		{D0E73992-784B-4F38-9198-4E08A7BAF8AE}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D0E73992-784B-4F38-9198-4E08A7BAF8AE}.Release|x64.ActiveCfg = Release|Any CPU
 		{D0E73992-784B-4F38-9198-4E08A7BAF8AE}.Release|x64.Build.0 = Release|Any CPU
+		{24251F4D-FE2C-4D3C-9ADE-2E5DF470B2F8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{24251F4D-FE2C-4D3C-9ADE-2E5DF470B2F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{24251F4D-FE2C-4D3C-9ADE-2E5DF470B2F8}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{24251F4D-FE2C-4D3C-9ADE-2E5DF470B2F8}.Debug|x64.Build.0 = Debug|Any CPU
+		{24251F4D-FE2C-4D3C-9ADE-2E5DF470B2F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{24251F4D-FE2C-4D3C-9ADE-2E5DF470B2F8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{24251F4D-FE2C-4D3C-9ADE-2E5DF470B2F8}.Release|x64.ActiveCfg = Release|Any CPU
+		{24251F4D-FE2C-4D3C-9ADE-2E5DF470B2F8}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -72,6 +82,7 @@ Global
 		{69D3CBDE-6740-4199-96EC-622240537C8A} = {8A9515FE-6CCF-4B80-9A37-87C2C3583424}
 		{FE9BD09A-74E5-4ED8-BD61-1A9F128E5DA0} = {8A9515FE-6CCF-4B80-9A37-87C2C3583424}
 		{D0E73992-784B-4F38-9198-4E08A7BAF8AE} = {8A9515FE-6CCF-4B80-9A37-87C2C3583424}
+		{24251F4D-FE2C-4D3C-9ADE-2E5DF470B2F8} = {8A9515FE-6CCF-4B80-9A37-87C2C3583424}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {7448F4E7-EE62-47E7-92EA-7833EE840AA1}

@@ -17,7 +17,7 @@ namespace LightDx
         private uint _stride;
         private int _vertexCount;
 
-        private bool _Disposed;
+        private bool _disposed;
 
         internal InputBuffer(LightDevice device, IntPtr buffer, IntPtr layout,
             int stride, int vertexCount)
@@ -38,14 +38,14 @@ namespace LightDx
 
         public void Dispose()
         {
-            if (_Disposed)
+            if (_disposed)
             {
                 return;
             }
             NativeHelper.Dispose(ref _buffer);
             NativeHelper.Dispose(ref _layout);
 
-            _Disposed = true;
+            _disposed = true;
             _device.RemoveComponent(this);
             GC.SuppressFinalize(this);
         }

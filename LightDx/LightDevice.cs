@@ -20,6 +20,9 @@ namespace LightDx
             public volatile bool Stop;
         }
 
+        private bool _disposing;
+        private bool _disposed;
+
         private Control _ctrl;
         private int _width, _height;
         private IntPtr _device, _swapchain, _context;
@@ -38,6 +41,8 @@ namespace LightDx
 
         private volatile MultithreadLoop _currentLoop;
 
+        internal Pipeline CurrentPipeline { get; set; }
+
         private LightDevice()
         {
         }
@@ -47,8 +52,14 @@ namespace LightDx
             Dispose();
         }
 
-        private void TryReleaseAll()
+        private void ReleaseAll()
         {
+            if (_disposed)
+            {
+                return;
+            }
+            _disposing = true;
+
             while (_components.Count != 0)
             {
                 var index = _components.Count - 1;
@@ -68,6 +79,10 @@ namespace LightDx
             NativeHelper.Dispose(ref _context);
             NativeHelper.Dispose(ref _swapchain);
             NativeHelper.Dispose(ref _device);
+
+            _disposing = false;
+            _disposed = true;
+            GC.SuppressFinalize(this);
         }
 
         internal void AddComponent(IDisposable obj)
@@ -77,6 +92,12 @@ namespace LightDx
 
         internal void RemoveComponent(IDisposable obj)
         {
+            if (_disposing)
+            {
+                return;
+            }
+
+            //TODO make it faster?
             for (int i = 0; i < _components.Count; ++i)
             {
                 if (_components[i].TryGetTarget(out var c) && c == obj)
@@ -107,11 +128,10 @@ namespace LightDx
                 IntPtr swapChain, device, immediateContext;
                 {
                     var d = new SwapChainDescription(ctrl.Handle, ret._width, ret._height);
-
-                    uint featureLevel;
+                    
                     Native.D3D11CreateDeviceAndSwapChain(
                         IntPtr.Zero, 1, IntPtr.Zero, 0, IntPtr.Zero, 0, 7, ref d,
-                        out swapChain, out device, out featureLevel, out immediateContext).Check();
+                        out swapChain, out device, out var featureLevel, out immediateContext).Check();
 
                     ret._device = device;
                     ret._swapchain = swapChain;
@@ -142,7 +162,7 @@ namespace LightDx
             }
             catch (NativeException e)
             {
-                ret.TryReleaseAll();
+                ret.ReleaseAll();
                 throw e;
             }
             return ret;
@@ -183,8 +203,7 @@ namespace LightDx
 
         public void Dispose()
         {
-            TryReleaseAll();
-            GC.SuppressFinalize(this);
+            ReleaseAll();
         }
 
         public RenderTarget CreateDefaultTarget(bool useDepthStencil)
@@ -339,61 +358,6 @@ namespace LightDx
             Device.CreateTexture2D(_device, ref t2d, IntPtr.Zero, out var tex).Check();
             
             return tex;
-        }
-
-        public unsafe IndexBuffer CreateImmutableIndexBuffer(Array data, int offset = 0, int length = -1)
-        {
-            int realLength = length == -1 ? data.Length - offset : length;
-            int indexSize = data is ushort[] ? 2 : data is uint[] ? 4 : throw new ArgumentException(nameof(data));
-            BufferDescription bd = new BufferDescription()
-            {
-                ByteWidth = (uint)(indexSize * realLength),
-                Usage = 0, //default
-                BindFlags = 2, //indexbuffer
-                CPUAccessFlags = 0, //none. or write (65536)
-                MiscFlags = 0,
-                StructureByteStride = (uint)indexSize,
-            };
-            DataBox box = new DataBox
-            {
-                DataPointer = null, //the pointer is set (after pinned) in _CreateBufferMethod
-                RowPitch = 0,
-                SlicePitch = 0,
-            };
-            using (var vb = new ComScopeGuard())
-            {
-                if (indexSize == 2)
-                {
-                    StructArrayHelper<ushort>.CreateBuffer(DevicePtr, &bd, &box, out vb.Ptr, (ushort[])data).Check();
-                }
-                else
-                {
-                    StructArrayHelper<uint>.CreateBuffer(DevicePtr, &bd, &box, out vb.Ptr, (uint[])data).Check();
-                }
-                return new IndexBuffer(this, vb.Move(), indexSize * 8, realLength);
-            }
-        }
-
-        public unsafe IndexBuffer CreateDynamicIndexBuffer(int bitWidth, int size)
-        {
-            if (bitWidth != 16 && bitWidth != 32)
-            {
-                throw new ArgumentOutOfRangeException(nameof(bitWidth));
-            }
-            BufferDescription bd = new BufferDescription()
-            {
-                ByteWidth = (uint)(bitWidth / 8 * size),
-                Usage = 2, //dynamic
-                BindFlags = 2, //indexbuffer
-                CPUAccessFlags = 0x10000, //write
-                MiscFlags = 0,
-                StructureByteStride = (uint)bitWidth / 8,
-            };
-            using (var vb = new ComScopeGuard())
-            {
-                Device.CreateBuffer(DevicePtr, &bd, null, out vb.Ptr).Check();
-                return new IndexBuffer(this, vb.Move(), bitWidth, size);
-            }
         }
 
         public void Present(bool vsync = false)

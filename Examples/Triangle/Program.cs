@@ -42,14 +42,13 @@ namespace Triangle
                 pipeline.Apply();
 
                 var input = pipeline.CreateInputDataProcessor<Vertex>();
-
                 var buffer = input.CreateImmutableBuffer(new[] {
                     new Vertex { Color = Color.Green, Position = new Float4(0.0f, 0.5f, 0.5f, 1.0f) },
                     new Vertex { Color = Color.Red, Position = new Float4(0.5f, -0.5f, 0.5f, 1.0f) },
                     new Vertex { Color = Color.Blue, Position = new Float4(-0.5f, -0.5f, 0.5f, 1.0f) },
                 });
 
-                var indexBuffer = device.CreateImmutableIndexBuffer(new uint[] { 2, 0, 1 });
+                var indexBuffer = pipeline.CreateImmutableIndexBuffer(new uint[] { 2, 0, 1 });
 
                 form.Show();
                 device.RunMultithreadLoop(delegate()

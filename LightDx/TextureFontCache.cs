@@ -13,12 +13,10 @@ namespace LightDx
     public class TextureFontCache : AbstractFontCache<Texture2D>
     {
         public TextureFontCache(LightDevice device, Font font)
-            : base(font, PixelFormat.Format32bppArgb, Color.Black, Color.Transparent)
+            : base(device, font, PixelFormat.Format32bppArgb, Color.Black, Color.Transparent)
         {
-            _device = device;
         }
-
-        private readonly LightDevice _device;
+        
         private readonly Dictionary<Texture2D, Tuple<IntPtr, int, int>> _memCache =
             new Dictionary<Texture2D, Tuple<IntPtr, int, int>>();
         private readonly HashSet<Texture2D> _dirtyCache = new HashSet<Texture2D>();

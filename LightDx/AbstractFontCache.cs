@@ -30,9 +30,12 @@ namespace LightDx
             public int Width;
             public int Height;
         }
-        
-        public AbstractFontCache(Font font, PixelFormat format, Color foreground, Color background)
+
+        public AbstractFontCache(LightDevice device, Font font, PixelFormat format, Color foreground, Color background)
         {
+            _device = device;
+            device.AddComponent(this);
+
             Font = font;
             PixelFormat = format;
             BackgroundColor = background;
@@ -84,7 +87,9 @@ namespace LightDx
             this.Dispose();
         }
 
-        public bool Disposed { get; private set; }
+        private bool _disposed;
+        protected LightDevice _device;
+
         public Font Font { get; private set; }
         public PixelFormat PixelFormat { get; private set; }
         public Color ForegroundColor { get; private set; }
@@ -114,7 +119,7 @@ namespace LightDx
 
         public void Dispose()
         {
-            if (Disposed)
+            if (_disposed)
             {
                 return;
             }
@@ -128,6 +133,9 @@ namespace LightDx
                 DisposeBitmap(b);
             }
             _bufferList.Clear();
+
+            _disposed = true;
+            _device.RemoveComponent(this);
             GC.SuppressFinalize(this);
         }
 

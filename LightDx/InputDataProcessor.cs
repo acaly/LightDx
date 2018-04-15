@@ -52,11 +52,11 @@ namespace LightDx
             };
             using (var vb = new ComScopeGuard())
             {
-                StructArrayHelper<T>.CreateBuffer(_device.DevicePtr, &bd, &box, out vb.Ptr, data).Check();
+                StructArrayHelper<T>.CreateBuffer(_device.DevicePtr, &bd, &box, out vb.Ptr, ref data[0]).Check();
                 return new InputBuffer(_device, vb.Move(), _inputLayout.AddRef(), _Size, realLength);
             }
         }
-
+        
         public unsafe InputBuffer CreateDynamicBuffer(int nElement)
         {
             BufferDescription bd = new BufferDescription()
@@ -77,7 +77,7 @@ namespace LightDx
 
         public unsafe void UpdateBuffer(InputBuffer buffer, T[] data)
         {
-            StructArrayHelper<T>.UpdateSubresource(_device.ContextPtr, buffer.BufferPtr, 0, null, data, 0, 0).Check();
+            StructArrayHelper<T>.UpdateSubresource(_device.ContextPtr, buffer.BufferPtr, 0, null, ref data[0], 0, 0);
         }
 
         public unsafe void UpdateBufferDynamic(InputBuffer buffer, T[] data, int start = 0, int length = -1)

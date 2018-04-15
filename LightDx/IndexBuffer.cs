@@ -12,6 +12,8 @@ namespace LightDx
         internal IndexBuffer(LightDevice device, IntPtr ptr, int bitWidth, int size)
         {
             _device = device;
+            device.AddComponent(this);
+
             _ptr = ptr;
             _bitWidth = bitWidth;
             _size = size;
@@ -26,10 +28,19 @@ namespace LightDx
         private IntPtr _ptr;
         private readonly int _bitWidth;
         private readonly int _size;
+        private bool _disposed;
 
         public void Dispose()
         {
+            if (_disposed)
+            {
+                return;
+            }
             NativeHelper.Dispose(ref _ptr);
+
+            _disposed = true;
+            _device.RemoveComponent(this);
+            GC.SuppressFinalize(this);
         }
 
         internal void Bind()
@@ -46,11 +57,11 @@ namespace LightDx
 
             if (_bitWidth == 16)
             {
-                StructArrayHelper<ushort>.CopyArray(ret.pSysMem, data, 2 * startIndex, 2 * realLength);
+                StructArrayHelper<ushort>.CopyArray(ret.pSysMem, (ushort[])data, 2 * startIndex, 2 * realLength);
             }
             else if (_bitWidth == 32)
             {
-                StructArrayHelper<uint>.CopyArray(ret.pSysMem, data, 4 * startIndex, 4 * realLength);
+                StructArrayHelper<uint>.CopyArray(ret.pSysMem, (uint[])data, 4 * startIndex, 4 * realLength);
             }
 
             DeviceContext.Unmap(_device.ContextPtr, _ptr, 0);

@@ -112,7 +112,6 @@ namespace LightDx
             UpdatePoint(ref _array[5], x, y, cr, cb, s, c, fr, fb);
 
             _pipeline.SetResource(0, tex);
-            _pipeline.ApplyResources();
             _input.UpdateBufferDynamic(_buffer, _array);
             _buffer.DrawAll();
         }

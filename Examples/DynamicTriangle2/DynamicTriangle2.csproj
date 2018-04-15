@@ -4,10 +4,10 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{FE9BD09A-74E5-4ED8-BD61-1A9F128E5DA0}</ProjectGuid>
+    <ProjectGuid>{24251F4D-FE2C-4D3C-9ADE-2E5DF470B2F8}</ProjectGuid>
     <OutputType>WinExe</OutputType>
-    <RootNamespace>DrawString</RootNamespace>
-    <AssemblyName>DrawString</AssemblyName>
+    <RootNamespace>DynamicTriangle2</RootNamespace>
+    <AssemblyName>DynamicTriangle2</AssemblyName>
     <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -53,6 +53,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Shader.fx" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\LightDx\LightDx.csproj">

@@ -201,9 +201,6 @@ namespace LightDx.Natives
         public static readonly CreateBufferDelegate CreateBuffer =
             CalliGenerator.GetCalliDelegate<CreateBufferDelegate>(3);
         
-        public unsafe delegate uint CreateBufferDelegate_SetPtr<T>(IntPtr @this,
-            void* d, void* data, out IntPtr r, T[] array);
-        
         public delegate uint CreateTexture2DDelegate(IntPtr @this,
             ref Texture2DDescription d, IntPtr data, out IntPtr r);
         public static readonly CreateTexture2DDelegate CreateTexture2D =
@@ -330,9 +327,6 @@ namespace LightDx.Natives
         public static readonly ClearDepthStencilViewDelegate ClearDepthStencilView =
             CalliGenerator.GetCalliDelegate<ClearDepthStencilViewDelegate>(53);
         
-        public unsafe delegate uint UpdateSubresourceDelegate<T>(IntPtr @this,
-            IntPtr r, int subres, void* box, T[] data, int p1, int p2);
-        
         public unsafe delegate uint MapDelegate(IntPtr @this,
             IntPtr r, int subres, int t, int f, void* ret);
         public static readonly MapDelegate Map =
@@ -347,6 +341,14 @@ namespace LightDx.Natives
             IntPtr b, IntPtr color, uint mask);
         public static readonly OMSetBlendStateDelegate OMSetBlendState =
             CalliGenerator.GetCalliDelegate<OMSetBlendStateDelegate>(35);
+
+        public delegate void SetConstantBuffersDelegate(IntPtr @this, uint start, uint num, ref IntPtr ptr);
+        public static readonly SetConstantBuffersDelegate VSSetConstantBuffers =
+            CalliGenerator.GetCalliDelegate<SetConstantBuffersDelegate>(7);
+        public static readonly SetConstantBuffersDelegate PSSetConstantBuffers =
+           CalliGenerator.GetCalliDelegate<SetConstantBuffersDelegate>(16);
+        public static readonly SetConstantBuffersDelegate GSSetConstantBuffers =
+           CalliGenerator.GetCalliDelegate<SetConstantBuffersDelegate>(22);
     }
 
     internal static class Blob
