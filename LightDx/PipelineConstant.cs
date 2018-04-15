@@ -14,7 +14,7 @@ namespace LightDx
         protected IntPtr _buffer;
         private bool _disposed;
 
-        internal IntPtr BuffetPtr => _buffer;
+        internal IntPtr BufferPtr => _buffer;
 
         internal protected AbstractPipelineConstant(LightDevice device, IntPtr buffer)
         {
@@ -57,9 +57,7 @@ namespace LightDx
 
         public unsafe void Update()
         {
-            //Not sure why this doesn't work. Change to Map/Unmap.
-            //StructArrayHelper<T>.UpdateSubresource(_device.ContextPtr, _buffer, 0, null, ref Value, 0, 0);
-
+            //Use Map/Unmap instead of UpdateSubresource.
             SubresourceData ret;
             DeviceContext.Map(_device.ContextPtr, _buffer, 0,
                 4 /* WRITE_DISCARD */, 0, &ret).Check();

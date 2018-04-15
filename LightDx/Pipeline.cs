@@ -247,7 +247,7 @@ namespace LightDx
 
         private void ApplyVSConstantBuffer(int slot, AbstractPipelineConstant pipelineConstant)
         {
-            var buffer = pipelineConstant?.BuffetPtr ?? IntPtr.Zero;
+            var buffer = pipelineConstant?.BufferPtr ?? IntPtr.Zero;
             DeviceContext.VSSetConstantBuffers(_device.ContextPtr, (uint)slot, 1, ref buffer);
         }
 

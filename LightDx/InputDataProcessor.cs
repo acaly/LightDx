@@ -75,6 +75,7 @@ namespace LightDx
             }
         }
 
+        //TODO use one of the following two depending on dynamic or not.
         public unsafe void UpdateBuffer(InputBuffer buffer, T[] data)
         {
             StructArrayHelper<T>.UpdateSubresource(_device.ContextPtr, buffer.BufferPtr, 0, null, ref data[0], 0, 0);
