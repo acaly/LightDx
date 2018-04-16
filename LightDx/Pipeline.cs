@@ -202,7 +202,7 @@ namespace LightDx
             if (_isBound)
             {
                 var view = tex?.ViewPtr ?? IntPtr.Zero;
-                DeviceContext.PSSetShaderResources(_device.ContextPtr, (uint)slot, 0, ref view);
+                DeviceContext.PSSetShaderResources(_device.ContextPtr, (uint)slot, 1, ref view);
             }
         }
 

@@ -18,12 +18,14 @@ namespace DrawString
             Application.SetCompatibleTextRenderingDefault(false);
 
             var form = new Form();
-            form.Text = "InfCube Test";
             form.ClientSize = new Size(800, 600);
 
             using (var device = LightDevice.Create(form))
             {
-                var target = device.CreateDefaultTarget(false);
+                var targetObj = device.GetDefaultTarget();
+                targetObj.ClearColor = new Float4(Color.White, 1);
+
+                var target = new RenderTarget(targetObj);
                 target.Apply();
 
                 var sprite = new Sprite(device);
@@ -32,7 +34,7 @@ namespace DrawString
                 form.Show();
                 device.RunMultithreadLoop(delegate ()
                 {
-                    target.ClearAll(Color.AliceBlue);
+                    target.ClearAll();
 
                     sprite.Apply();
                     sprite.DrawString(guiFont, "Hello World!", 0, 0, 800);

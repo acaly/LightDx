@@ -21,10 +21,17 @@ namespace LightDx
             public Float4 TexCoord;
         }
 
+        private struct VSConstant
+        {
+            public float Width;
+            public float Height;
+        }
+
         private readonly LightDevice _device;
         private readonly Pipeline _pipeline;
         private readonly InputDataProcessor<Vertex> _input;
         private readonly InputBuffer _buffer;
+        private readonly PipelineConstant<VSConstant> _constant;
         private readonly Vertex[] _array;
         private bool _disposed;
 
@@ -47,6 +54,9 @@ namespace LightDx
                 new Vertex { TexCoord = new Float4(1, 1, 0, 0), Position = new Float4(1, 1, 0, 0) },
             };
             _buffer = _input.CreateDynamicBuffer(6);
+
+            _constant = _pipeline.CreateConstantBuffer<VSConstant>();
+            _pipeline.SetConstant(ConstantUsage.VertexShader, 0, _constant);
         }
 
         ~Sprite()
@@ -67,6 +77,7 @@ namespace LightDx
             _pipeline.Dispose();
             _input.Dispose();
             _buffer.Dispose();
+            _constant.Dispose();
 
             _disposed = true;
             _device.RemoveComponent(this);
@@ -75,6 +86,10 @@ namespace LightDx
 
         public void Apply()
         {
+            _constant.Value.Width = _device.ScreenWidth;
+            _constant.Value.Height = _device.ScreenHeight;
+            _constant.Update();
+
             _pipeline.Apply();
         }
 
@@ -172,12 +187,18 @@ struct PS_IN
 	float4 tex : TEXCOORD;
 };
 
+cbuffer VS_CONSTANT_BUFFER : register(b0)
+{
+	float fWidth;
+	float fHeight;
+};
+
 PS_IN VS(VS_IN input)
 {
 	PS_IN output = (PS_IN)0;
 
-	output.pos.x = (input.pos.x / 400) - 1;
-	output.pos.y = 1 - (input.pos.y / 300);
+	output.pos.x = (input.pos.x / fWidth * 2) - 1;
+	output.pos.y = 1 - (input.pos.y / fHeight * 2);
 	output.pos.w = 1;
 	output.tex = input.tex;
 

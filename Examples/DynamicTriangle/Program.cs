@@ -22,10 +22,10 @@ namespace DynamicTriangle
             public Float4 Color;
         }
 
-        static void SetCoordinate(ref Float4 position, double angle)
+        static void SetCoordinate(LightDevice device, ref Float4 position, double angle)
         {
-            position.X = 0.5f * (float)Math.Cos(angle) / 4 * 3;
-            position.Y = 0.5f * (float)Math.Sin(angle);
+            position.X = 0.5f * (float)Math.Cos(angle) * 600 / device.ScreenWidth;
+            position.Y = 0.5f * (float)Math.Sin(angle) * 600 / device.ScreenHeight;
         }
 
         [STAThread]
@@ -39,7 +39,7 @@ namespace DynamicTriangle
 
             using (var device = LightDevice.Create(form))
             {
-                var target = device.CreateDefaultTarget(false);
+                var target = new RenderTarget(device.GetDefaultTarget());
                 target.Apply();
 
                 Pipeline pipeline;
@@ -52,7 +52,6 @@ namespace DynamicTriangle
                 var vertexData = new[] {
                     new Vertex { Position = new Float4(0, 0, 0.5f, 1), Color = Color.Green },
                     new Vertex { Position = new Float4(0, 0, 0.5f, 1), Color = Color.Red },
-                    new Vertex { Position = new Float4(0, 0, 0.5f, 1), Color = Color.Blue },
                     new Vertex { Position = new Float4(0, 0, 0.5f, 1), Color = Color.Blue },
                 };
 
@@ -69,14 +68,13 @@ namespace DynamicTriangle
                     var angle = -clock.Elapsed.TotalSeconds * Math.PI / 3;
                     var distance = Math.PI * 2 / 3;
 
-                    SetCoordinate(ref vertexData[0].Position, angle);
-                    SetCoordinate(ref vertexData[1].Position, angle - distance);
-                    SetCoordinate(ref vertexData[2].Position, angle + distance);
-                    SetCoordinate(ref vertexData[3].Position, angle + distance / 2);
+                    SetCoordinate(device, ref vertexData[0].Position, angle);
+                    SetCoordinate(device, ref vertexData[1].Position, angle - distance);
+                    SetCoordinate(device, ref vertexData[2].Position, angle + distance);
 
                     buffer.Update(vertexData);
 
-                    target.ClearAll(Color.BlanchedAlmond);
+                    target.ClearAll();
                     indexBuffer.DrawAll(buffer);
                     device.Present(true);
                 });

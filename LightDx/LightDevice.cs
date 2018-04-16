@@ -32,21 +32,25 @@ namespace LightDx
 
         internal IntPtr DevicePtr => _device;
         internal IntPtr ContextPtr => _context;
+        internal IntPtr DefaultRenderView => _defaultRenderView;
 
-        internal int WindowWidth => _width;
-        internal int WindowHeight => _height;
+        public int ScreenWidth => _width;
+        public int ScreenHeight => _height;
 
-        private IntPtr _depthStencilView;
+        private RenderTargetObject _defaultRenderTarget;
 
         private List<WeakReference<IDisposable>> _components = new List<WeakReference<IDisposable>>();
 
         private volatile MultithreadLoop _currentLoop;
         private AutoResetEvent _ctrlResized = new AutoResetEvent(false);
 
+        internal RenderTarget CurrentTarget { get; set; }
         internal Pipeline CurrentPipeline { get; set; }
 
         public bool AutoResize { get; set; } = true;
         public event EventHandler ResolutionChanged;
+        internal event Action ReleaseRenderTargets;
+        internal event Action RebuildRenderTargets;
         
         private LightDevice()
         {
@@ -80,7 +84,6 @@ namespace LightDx
                 }
             }
             _components.Clear();
-            NativeHelper.Dispose(ref _depthStencilView);
             NativeHelper.Dispose(ref _defaultRenderView);
             NativeHelper.Dispose(ref _output);
             NativeHelper.Dispose(ref _context);
@@ -167,47 +170,16 @@ namespace LightDx
 
                     ret._output = output.Move();
                 }
+
+                ret._defaultRenderTarget = RenderTargetObject.CreateSwapchainTarget(ret);
+                ret.AddEventHandlers();
             }
             catch (NativeException e)
             {
                 ret.ReleaseAll();
                 throw e;
             }
-            ret.AddEventHandlers();
             return ret;
-        }
-
-        private void CreateDepthStencil()
-        {
-            Texture2DDescription depth = new Texture2DDescription
-            {
-                Width = (uint)_width,
-                Height = (uint)_height,
-                MipLevels = 1,
-                ArraySize = 1,
-                Format = 20, //DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
-                SampleCount = 1,
-                SampleQuality = 0,
-                Usage = 0, //Default
-                BindFlags = 64, //DepthStencil
-                CPUAccessFlags = 0,
-                MiscFlags = 0,
-            };
-            using (ComScopeGuard depthTex = new ComScopeGuard(), depthView = new ComScopeGuard())
-            {
-                Device.CreateTexture2D(_device, ref depth, IntPtr.Zero, out depthTex.Ptr).Check();
-                Device.CreateDepthStencilView(_device, depthTex.Ptr, IntPtr.Zero, out depthView.Ptr).Check();
-                this._depthStencilView = depthView.Move();
-            }
-        }
-
-        private IntPtr GetDefaultDepthStencil()
-        {
-            if (_depthStencilView == null)
-            {
-                CreateDepthStencil();
-            }
-            return _depthStencilView;
         }
 
         public void Dispose()
@@ -219,16 +191,31 @@ namespace LightDx
         {
             _width = width;
             _height = height;
-            
-            //TODO update resolution internally
 
+            //Release all target objects, including _defaultRenderTarget
+            ReleaseRenderTargets?.Invoke();
+
+            //Resize swapchain
+            SwapChain.ResizeBuffers(_swapchain, 1, (uint)width, (uint)height, 28 /*R8G8B8A8_UNorm*/, 0);
+
+            //Rebuild all target objects
+            RebuildRenderTargets?.Invoke();
+
+            //Apply current RenderTarget
+            CurrentTarget.Apply();
+
+            //Invoke external event
             ResolutionChanged?.Invoke(this, EventArgs.Empty);
         }
 
-        public RenderTarget CreateDefaultTarget(bool useDepthStencil)
+        public RenderTargetObject GetDefaultTarget()
         {
-            return new RenderTarget(this, new[] { _defaultRenderView.AddRef() },
-                useDepthStencil ? GetDefaultDepthStencil().AddRef() : IntPtr.Zero);
+            return _defaultRenderTarget;
+        }
+
+        public RenderTargetObject CreateDefaultDepthStencilTarget()
+        {
+            return RenderTargetObject.CreateDepthStencilTarget(this, 20 /*DXGI_FORMAT_D32_FLOAT_S8X24_UINT*/);
         }
 
         public Pipeline CompilePipeline(ShaderSource shader, bool useGeometryShader, InputTopology topology)

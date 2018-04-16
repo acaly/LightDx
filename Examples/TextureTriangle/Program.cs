@@ -31,7 +31,7 @@ namespace TextureTriangle
 
             using (var device = LightDevice.Create(form))
             {
-                var target = device.CreateDefaultTarget(false);
+                var target = new RenderTarget(device.GetDefaultTarget());
                 target.Apply();
 
                 Pipeline pipeline;
@@ -66,7 +66,7 @@ namespace TextureTriangle
                 form.Show();
                 device.RunMultithreadLoop(delegate()
                 {
-                    target.ClearAll(Color.BlanchedAlmond);
+                    target.ClearAll();
                     buffer.DrawAll();
                     device.Present(true);
                 });

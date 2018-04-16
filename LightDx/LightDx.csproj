@@ -70,6 +70,7 @@
     <Compile Include="CalliGenerator.cs" />
     <Compile Include="ComScopeGuard.cs" />
     <Compile Include="DepthTest.cs" />
+    <Compile Include="RenderTargetObject.cs" />
     <Compile Include="StructArrayHelper.cs" />
     <Compile Include="Vectors.cs" />
     <Compile Include="FrameCounter.cs" />

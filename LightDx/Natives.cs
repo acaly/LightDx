@@ -238,6 +238,11 @@ namespace LightDx.Natives
             IntPtr guid, out IntPtr r);
         public static readonly GetParentDelegate GetParent =
             CalliGenerator.GetCalliDelegate<GetParentDelegate>(6);
+
+        public delegate uint ResizeBuffersDelegate(IntPtr @this,
+            uint count, uint width, uint height, uint format, uint flags);
+        public static readonly ResizeBuffersDelegate ResizeBuffers =
+            CalliGenerator.GetCalliDelegate<ResizeBuffersDelegate>(13);
     }
 
     internal static class Factory

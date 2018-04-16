@@ -31,7 +31,7 @@ namespace Triangle
 
             using (var device = LightDevice.Create(form))
             {
-                var target = device.CreateDefaultTarget(false);
+                var target = new RenderTarget(device.GetDefaultTarget());
                 target.Apply();
 
                 Pipeline pipeline;
@@ -53,7 +53,7 @@ namespace Triangle
                 form.Show();
                 device.RunMultithreadLoop(delegate()
                 {
-                    target.ClearAll(Color.BlanchedAlmond);
+                    target.ClearAll();
                     indexBuffer.DrawAll(buffer);
                     device.Present(true);
                 });

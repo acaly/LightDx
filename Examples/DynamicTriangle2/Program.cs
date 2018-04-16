@@ -27,10 +27,10 @@ namespace DynamicTriangle2
             public float Time;
         }
 
-        static void SetCoordinate(ref Float4 position, double angle)
+        static void SetCoordinate(LightDevice device, ref Float4 position, double angle)
         {
-            position.X = 0.5f * (float)Math.Cos(angle) / 4 * 3;
-            position.Y = 0.5f * (float)Math.Sin(angle);
+            position.X = 0.5f * (float)Math.Cos(angle) * 600 / device.ScreenWidth;
+            position.Y = 0.5f * (float)Math.Sin(angle) * 600 / device.ScreenHeight;
         }
 
         [STAThread]
@@ -44,7 +44,7 @@ namespace DynamicTriangle2
 
             using (var device = LightDevice.Create(form))
             {
-                var target = device.CreateDefaultTarget(false);
+                var target = new RenderTarget(device.GetDefaultTarget());
                 target.Apply();
 
                 Pipeline pipeline;
@@ -76,15 +76,15 @@ namespace DynamicTriangle2
                     var angle = -clock.Elapsed.TotalSeconds * Math.PI / 3;
                     var distance = Math.PI * 2 / 3;
 
-                    SetCoordinate(ref vertexData[0].Position, angle);
-                    SetCoordinate(ref vertexData[1].Position, angle - distance);
-                    SetCoordinate(ref vertexData[2].Position, angle + distance);
+                    SetCoordinate(device, ref vertexData[0].Position, angle);
+                    SetCoordinate(device, ref vertexData[1].Position, angle - distance);
+                    SetCoordinate(device, ref vertexData[2].Position, angle + distance);
                     buffer.Update(vertexData);
 
                     constantBuffer.Value.Time = ((float)clock.Elapsed.TotalSeconds % 2) / 2;
                     constantBuffer.Update();
 
-                    target.ClearAll(Color.BlanchedAlmond);
+                    target.ClearAll();
                     indexBuffer.DrawAll(buffer);
                     device.Present(true);
                 });
