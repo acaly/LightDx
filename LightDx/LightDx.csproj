@@ -76,8 +76,8 @@
     <Compile Include="FrameCounter.cs" />
     <Compile Include="IndexBuffer.cs" />
     <Compile Include="InputAttributes.cs" />
-    <Compile Include="InputBuffer.cs" />
-    <Compile Include="InputDataProcessor.cs" />
+    <Compile Include="VertexBuffer.cs" />
+    <Compile Include="VertexDataProcessor.cs" />
     <Compile Include="LightDevice.cs" />
     <Compile Include="NativeException.cs" />
     <Compile Include="NativeHelper.cs" />
