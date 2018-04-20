@@ -13,7 +13,7 @@ using System.Windows.Forms;
 
 namespace LightDx
 {
-    public class LightDevice : IDisposable
+    public sealed class LightDevice : IDisposable
     {
         private class MultithreadLoop
         {
@@ -61,7 +61,7 @@ namespace LightDx
             Dispose();
         }
 
-        private void ReleaseAll()
+        private void Dispose(bool disposing)
         {
             if (_disposed)
             {
@@ -69,21 +69,25 @@ namespace LightDx
             }
             _disposing = true;
             
-            RemoveEventHandlers();
-
-            while (_components.Count != 0)
+            if (disposing)
             {
-                var index = _components.Count - 1;
-                var c = _components[index];
-                _components.RemoveAt(index);
+                RemoveEventHandlers();
 
-                IDisposable cobj;
-                if (c.TryGetTarget(out cobj))
+                while (_components.Count != 0)
                 {
-                    cobj.Dispose();
+                    var index = _components.Count - 1;
+                    var c = _components[index];
+                    _components.RemoveAt(index);
+
+                    IDisposable cobj;
+                    if (c.TryGetTarget(out cobj))
+                    {
+                        cobj.Dispose();
+                    }
                 }
+                _components.Clear();
             }
-            _components.Clear();
+
             NativeHelper.Dispose(ref _defaultRenderView);
             NativeHelper.Dispose(ref _output);
             NativeHelper.Dispose(ref _context);
@@ -176,7 +180,7 @@ namespace LightDx
             }
             catch (NativeException e)
             {
-                ret.ReleaseAll();
+                ret.Dispose(true);
                 throw e;
             }
             return ret;
@@ -184,7 +188,7 @@ namespace LightDx
 
         public void Dispose()
         {
-            ReleaseAll();
+            Dispose(true);
         }
 
         public void ChangeResolution(int width, int height)

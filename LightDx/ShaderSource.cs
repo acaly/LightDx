@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace LightDx
 {
-    public class ShaderSource
+    public sealed class ShaderSource
     {
         internal byte[] Data { get; private set; }
         internal ShaderType ShaderTypes { get; private set; }

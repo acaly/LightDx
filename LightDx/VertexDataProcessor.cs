@@ -15,7 +15,7 @@ namespace LightDx
         void UpdateBuffer(VertexBuffer buffer, Array data, int start, int length);
     }
 
-    public class VertexDataProcessor<T> : IDisposable
+    public sealed class VertexDataProcessor<T> : IDisposable
         where T : struct
     {
         private class BufferUpdate : IBufferUpdate
@@ -75,7 +75,12 @@ namespace LightDx
 
         ~VertexDataProcessor()
         {
-            Dispose();
+            Dispose(false);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
         }
 
         public unsafe VertexBuffer CreateImmutableBuffer(T[] data, int offset = 0, int length = -1)
@@ -164,7 +169,7 @@ namespace LightDx
             return fieldList.ToArray();
         }
 
-        public void Dispose()
+        private void Dispose(bool disposing)
         {
             if (_disposed)
             {
@@ -172,8 +177,12 @@ namespace LightDx
             }
             NativeHelper.Dispose(ref _inputLayout);
 
+            if (disposing)
+            {
+                _device.RemoveComponent(this);
+            }
+
             _disposed = true;
-            _device.RemoveComponent(this);
             GC.SuppressFinalize(this);
         }
     }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace LightDx
 {
-    public class Texture2D : IDisposable
+    public sealed class Texture2D : IDisposable
     {
         private readonly LightDevice _device;
 
@@ -32,10 +32,15 @@ namespace LightDx
 
         ~Texture2D()
         {
-            Dispose();
+            Dispose(false);
         }
 
         public void Dispose()
+        {
+            Dispose(true);
+        }
+
+        private void Dispose(bool disposing)
         {
             if (_disposed)
             {
@@ -45,8 +50,12 @@ namespace LightDx
             NativeHelper.Dispose(ref _texture);
             NativeHelper.Dispose(ref _view);
 
+            if (disposing)
+            {
+                _device.RemoveComponent(this);
+            }
+
             _disposed = true;
-            _device.RemoveComponent(this);
             GC.SuppressFinalize(this);
         }
     }

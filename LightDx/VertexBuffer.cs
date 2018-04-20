@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace LightDx
 {
-    public class VertexBuffer : IDisposable
+    public sealed class VertexBuffer : IDisposable
     {
         private readonly LightDevice _device;
         private readonly IBufferUpdate _update;
@@ -39,10 +39,15 @@ namespace LightDx
 
         ~VertexBuffer()
         {
-            Dispose();
+            Dispose(false);
         }
 
         public void Dispose()
+        {
+            Dispose(true);
+        }
+
+        private void Dispose(bool disposing)
         {
             if (_disposed)
             {
@@ -51,8 +56,12 @@ namespace LightDx
             NativeHelper.Dispose(ref _buffer);
             NativeHelper.Dispose(ref _layout);
 
+            if (disposing)
+            {
+                _device.RemoveComponent(this);
+            }
+
             _disposed = true;
-            _device.RemoveComponent(this);
             GC.SuppressFinalize(this);
         }
 

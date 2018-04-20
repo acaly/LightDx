@@ -20,7 +20,7 @@ namespace LightDx
         TextureTarget,
     }
 
-    public class RenderTargetObject : IDisposable
+    public sealed class RenderTargetObject : IDisposable
     {
         private LightDevice _device;
         private bool _disposed;
@@ -73,21 +73,31 @@ namespace LightDx
 
         ~RenderTargetObject()
         {
-            Dispose();
+            Dispose(false);
         }
 
         public void Dispose()
+        {
+            Dispose(true);
+        }
+
+        private void Dispose(bool disposing)
         {
             if (_disposed)
             {
                 return;
             }
             NativeHelper.Dispose(ref _viewPtr);
-            _device.ReleaseRenderTargets -= ReleaseView;
-            _device.RebuildRenderTargets -= RebuildView;
+
+            if (disposing)
+            {
+                _device.ReleaseRenderTargets -= ReleaseView;
+                _device.RebuildRenderTargets -= RebuildView;
+
+                _device.RemoveComponent(this);
+            }
 
             _disposed = true;
-            _device.RemoveComponent(this);
             GC.SuppressFinalize(this);
         }
 

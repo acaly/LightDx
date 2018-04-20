@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace LightDx
 {
     public abstract class AbstractFontCache<T> : IDisposable
-        where T : class
+        where T : class, IDisposable
     {
         public struct CachedRegion
         {
@@ -84,7 +84,7 @@ namespace LightDx
 
         ~AbstractFontCache()
         {
-            this.Dispose();
+            Dispose(false);
         }
 
         private bool _disposed;
@@ -119,23 +119,33 @@ namespace LightDx
 
         public void Dispose()
         {
+            Dispose(true);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
             if (_disposed)
             {
                 return;
             }
-            _gdiBitmapGraphics.Dispose();
-            _gdiBitmap.Dispose();
-            _brush.Dispose();
-            _formatSingle.Dispose();
-            _formatDouble.Dispose();
-            foreach (var b in _bufferList)
+
+            if (disposing)
             {
-                DisposeBitmap(b);
+                _gdiBitmapGraphics.Dispose();
+                _gdiBitmap.Dispose();
+                _brush.Dispose();
+                _formatSingle.Dispose();
+                _formatDouble.Dispose();
+                foreach (var b in _bufferList)
+                {
+                    DisposeBitmap(b);
+                }
+                _bufferList.Clear();
+
+                _device.RemoveComponent(this);
             }
-            _bufferList.Clear();
 
             _disposed = true;
-            _device.RemoveComponent(this);
             GC.SuppressFinalize(this);
         }
 

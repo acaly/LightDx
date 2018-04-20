@@ -8,9 +8,8 @@ using System.Threading.Tasks;
 namespace LightDx
 {
     //TODO specify address and filtering options (at startup)
-    //TODO make a DeviceChild class?
     //TODO support color
-    public class Sprite : IDisposable
+    public sealed class Sprite : IDisposable
     {
         private struct Vertex
         {
@@ -61,26 +60,32 @@ namespace LightDx
 
         ~Sprite()
         {
-            if (!_disposed)
-            {
-                Dispose();
-            }
+            Dispose(false);
         }
 
         public void Dispose()
+        {
+            Dispose(true);
+        }
+
+        private void Dispose(bool disposing)
         {
             if (_disposed)
             {
                 return;
             }
 
-            _pipeline.Dispose();
-            _vertexProcessor.Dispose();
-            _buffer.Dispose();
-            _constant.Dispose();
+            if (disposing)
+            {
+                _pipeline.Dispose();
+                _vertexProcessor.Dispose();
+                _buffer.Dispose();
+                _constant.Dispose();
+
+                _device.RemoveComponent(this);
+            }
 
             _disposed = true;
-            _device.RemoveComponent(this);
             GC.SuppressFinalize(this);
         }
 

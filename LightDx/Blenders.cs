@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace LightDx
 {
-    public class Blender
+    public sealed class Blender
     {
         private readonly bool _alpha;
 

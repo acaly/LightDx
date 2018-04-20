@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace LightDx
 {
-    public class FrameCounter
+    public sealed class FrameCounter
     {
         public FrameCounter()
         {

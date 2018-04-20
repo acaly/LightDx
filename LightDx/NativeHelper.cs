@@ -20,18 +20,6 @@ namespace LightDx
             return ret;
         }
 
-        public static void Dispose(ref IntPtr[] a)
-        {
-            if (a != null)
-            {
-                foreach (var o in a)
-                {
-                    Marshal.Release(o);
-                }
-                a = null;
-            }
-        }
-
         public static IntPtr AddRef(this IntPtr comObj)
         {
             if (comObj != IntPtr.Zero)

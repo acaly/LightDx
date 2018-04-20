@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace LightDx
 {
-    public class Sampler
+    public sealed class Sampler
     {
         //TODO
     }

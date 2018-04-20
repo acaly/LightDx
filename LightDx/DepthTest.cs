@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace LightDx
 {
-    public class DepthTest
+    public sealed class DepthTest
     {
         //TODO
     }

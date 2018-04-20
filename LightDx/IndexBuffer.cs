@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace LightDx
 {
-    public class IndexBuffer : IDisposable
+    public sealed class IndexBuffer : IDisposable
     {
         internal IndexBuffer(LightDevice device, IntPtr ptr, int bitWidth, int size)
         {
@@ -21,7 +21,7 @@ namespace LightDx
 
         ~IndexBuffer()
         {
-            Dispose();
+            Dispose(false);
         }
 
         private readonly LightDevice _device;
@@ -32,14 +32,23 @@ namespace LightDx
 
         public void Dispose()
         {
+            Dispose(true);
+        }
+
+        private void Dispose(bool disposing)
+        {
             if (_disposed)
             {
                 return;
             }
             NativeHelper.Dispose(ref _ptr);
 
+            if (disposing)
+            {
+                _device.RemoveComponent(this);
+            }
+
             _disposed = true;
-            _device.RemoveComponent(this);
             GC.SuppressFinalize(this);
         }
 

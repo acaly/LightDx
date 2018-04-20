@@ -17,7 +17,7 @@ namespace LightDx.InputAttributes
         internal static readonly IntPtr TEXCOORD = Marshal.StringToHGlobalAnsi("TEXCOORD");
     }
 
-    public class PositionAttribute : InputAttribute
+    public sealed class PositionAttribute : InputAttribute
     {
         public PositionAttribute(int id = 0)
         {
@@ -29,8 +29,8 @@ namespace LightDx.InputAttributes
             get { return POSITION; }
         }
     }
-    
-    public class ColorAttribute : InputAttribute
+
+    public sealed class ColorAttribute : InputAttribute
     {
         public ColorAttribute(int id = 0)
         {
@@ -43,7 +43,7 @@ namespace LightDx.InputAttributes
         }
     }
 
-    public class TexCoordAttribute : InputAttribute
+    public sealed class TexCoordAttribute : InputAttribute
     {
         public TexCoordAttribute(int id = 0)
         {

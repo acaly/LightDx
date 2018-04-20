@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace LightDx
 {
+    //TODO use same baseclass for all buffers
     public abstract class AbstractConstantBuffer : IDisposable
     {
         protected LightDevice _device;
@@ -26,10 +27,15 @@ namespace LightDx
 
         ~AbstractConstantBuffer()
         {
-            Dispose();
+            Dispose(false);
         }
 
         public void Dispose()
+        {
+            Dispose(true);
+        }
+
+        protected virtual void Dispose(bool disposing)
         {
             if (_disposed)
             {
@@ -37,13 +43,17 @@ namespace LightDx
             }
             NativeHelper.Dispose(ref _buffer);
 
+            if (disposing)
+            {
+                _device.RemoveComponent(this);
+            }
+
             _disposed = true;
-            _device.RemoveComponent(this);
             GC.SuppressFinalize(this);
         }
     }
 
-    public class ConstantBuffer<T> : AbstractConstantBuffer
+    public sealed class ConstantBuffer<T> : AbstractConstantBuffer
         where T : struct
     {
         private static readonly int _Size = Marshal.SizeOf<T>();

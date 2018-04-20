@@ -22,7 +22,7 @@ namespace LightDx
         PixelShader = 4,
     }
 
-    public class Pipeline : IDisposable
+    public sealed class Pipeline : IDisposable
     {
         private readonly LightDevice _device;
         private bool _disposed;
@@ -60,10 +60,15 @@ namespace LightDx
 
         ~Pipeline()
         {
-            Dispose();
+            Dispose(false);
         }
 
         public void Dispose()
+        {
+            Dispose(true);
+        }
+
+        private void Dispose(bool disposing)
         {
             if (_disposed)
             {
@@ -76,8 +81,12 @@ namespace LightDx
             NativeHelper.Dispose(ref _signatureBlob);
             NativeHelper.Dispose(ref _blendPtr);
 
+            if (disposing)
+            {
+                _device.RemoveComponent(this);
+            }
+
             _disposed = true;
-            _device.RemoveComponent(this);
             GC.SuppressFinalize(this);
         }
 
