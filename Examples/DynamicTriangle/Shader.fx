@@ -10,8 +10,9 @@ struct PS_IN
 	float4 col : COLOR;
 };
 
-cbuffer VS_CONSTANT_BUFFER : register(b0)
+cbuffer CONSTANT_BUFFER : register(b0)
 {
+	float4 fGlobalDiffuse;
 	float fTime;
 };
 
@@ -28,5 +29,5 @@ PS_IN VS(VS_IN input)
 
 float4 PS(PS_IN input) : SV_Target
 {
-	return input.col;
+	return input.col * 0.1 + input.col * fGlobalDiffuse;
 }

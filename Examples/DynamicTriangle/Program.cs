@@ -24,6 +24,7 @@ namespace DynamicTriangle2
 
         private struct ConstantBuffer
         {
+            public Float4 GlobalAlpha;
             public float Time;
         }
 
@@ -67,8 +68,14 @@ namespace DynamicTriangle2
 
                 var constantBuffer = pipeline.CreateConstantBuffer<ConstantBuffer>();
                 pipeline.SetConstant(ConstantUsage.VertexShader, 0, constantBuffer);
+                pipeline.SetConstant(ConstantUsage.PixelShader, 0, constantBuffer);
+
+                constantBuffer.Value.GlobalAlpha = new Float4(1, 1, 1, 1);
 
                 form.Show();
+                
+                var i = 0;
+                var rand = new Random();
 
                 var clock = Stopwatch.StartNew();
                 device.RunMultithreadLoop(delegate ()
@@ -82,6 +89,14 @@ namespace DynamicTriangle2
                     buffer.Update(vertexData);
 
                     constantBuffer.Value.Time = ((float)clock.Elapsed.TotalSeconds % 2) / 2;
+
+                    if (++i == 60)
+                    {
+                        i = 0;
+                        constantBuffer.Value.GlobalAlpha.X = (float)rand.NextDouble() * 0.5f + 0.5f;
+                        constantBuffer.Value.GlobalAlpha.Y = (float)rand.NextDouble() * 0.5f + 0.5f;
+                        constantBuffer.Value.GlobalAlpha.Z = (float)rand.NextDouble() * 0.5f + 0.5f;
+                    }
                     constantBuffer.Update();
 
                     target.ClearAll();

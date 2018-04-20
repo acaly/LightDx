@@ -13,12 +13,12 @@ namespace LightDx
         Point = 1,
         Triangle = 4,
     }
-
-    [Flags]
+    
     public enum ConstantUsage
     {
-        VertexShader = 1,
-        //other shaders not supported
+        VertexShader,
+        GeometryShader,
+        PixelShader,
     }
 
     public class Pipeline : IDisposable
@@ -37,6 +37,8 @@ namespace LightDx
         private Viewport _viewport;
 
         private Dictionary<int, AbstractConstantBuffer> _vsConstants = new Dictionary<int, AbstractConstantBuffer>();
+        private Dictionary<int, AbstractConstantBuffer> _gsConstants = new Dictionary<int, AbstractConstantBuffer>();
+        private Dictionary<int, AbstractConstantBuffer> _psConstants = new Dictionary<int, AbstractConstantBuffer>();
         private Dictionary<int, Texture2D> _resources = new Dictionary<int, Texture2D>();
 
         private bool _isBound;
@@ -217,6 +219,20 @@ namespace LightDx
                         ApplyVSConstantBuffer(slot, pipelineConstant);
                     }
                     break;
+                case ConstantUsage.GeometryShader:
+                    _gsConstants[slot] = pipelineConstant;
+                    if (_isBound)
+                    {
+                        ApplyGSConstantBuffer(slot, pipelineConstant);
+                    }
+                    break;
+                case ConstantUsage.PixelShader:
+                    _psConstants[slot] = pipelineConstant;
+                    if (_isBound)
+                    {
+                        ApplyPSConstantBuffer(slot, pipelineConstant);
+                    }
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(usage));
             }
@@ -249,6 +265,18 @@ namespace LightDx
         {
             var buffer = pipelineConstant?.BufferPtr ?? IntPtr.Zero;
             DeviceContext.VSSetConstantBuffers(_device.ContextPtr, (uint)slot, 1, ref buffer);
+        }
+
+        private void ApplyGSConstantBuffer(int slot, AbstractConstantBuffer pipelineConstant)
+        {
+            var buffer = pipelineConstant?.BufferPtr ?? IntPtr.Zero;
+            DeviceContext.GSSetConstantBuffers(_device.ContextPtr, (uint)slot, 1, ref buffer);
+        }
+
+        private void ApplyPSConstantBuffer(int slot, AbstractConstantBuffer pipelineConstant)
+        {
+            var buffer = pipelineConstant?.BufferPtr ?? IntPtr.Zero;
+            DeviceContext.PSSetConstantBuffers(_device.ContextPtr, (uint)slot, 1, ref buffer);
         }
 
         public void Apply()
