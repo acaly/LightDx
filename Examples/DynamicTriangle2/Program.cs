@@ -60,7 +60,7 @@ namespace DynamicTriangle2
                     new Vertex { Position = new Float4(0, 0, 0.5f, 1), Color = Color.Blue },
                 };
 
-                var input = pipeline.CreateInputDataProcessor<Vertex>();
+                var input = pipeline.CreateVertexDataProcessor<Vertex>();
                 var buffer = input.CreateDynamicBuffer(3);
 
                 var indexBuffer = pipeline.CreateImmutableIndexBuffer(new uint[] { 0, 1, 2 });

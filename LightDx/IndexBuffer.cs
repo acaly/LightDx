@@ -67,12 +67,12 @@ namespace LightDx
             DeviceContext.Unmap(_device.ContextPtr, _ptr, 0);
         }
 
-        public void DrawAll(InputBuffer vertex)
+        public void DrawAll(VertexBuffer vertex)
         {
             Draw(vertex, 0, _size);
         }
 
-        public void Draw(InputBuffer vertex, int startIndex, int indexCount)
+        public void Draw(VertexBuffer vertex, int startIndex, int indexCount)
         {
             Bind();
             vertex.Bind();

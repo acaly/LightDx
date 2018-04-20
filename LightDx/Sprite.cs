@@ -9,7 +9,6 @@ namespace LightDx
 {
     //TODO specify address and filtering options (at startup)
     //TODO make a DeviceChild class?
-    //TODO use Device.WindowWidth, WindowHeight instead of 400 and 300
     //TODO support color
     public class Sprite : IDisposable
     {
@@ -29,8 +28,8 @@ namespace LightDx
 
         private readonly LightDevice _device;
         private readonly Pipeline _pipeline;
-        private readonly InputDataProcessor<Vertex> _input;
-        private readonly InputBuffer _buffer;
+        private readonly VertexDataProcessor<Vertex> _vertexProcessor;
+        private readonly VertexBuffer _buffer;
         private readonly PipelineConstant<VSConstant> _constant;
         private readonly Vertex[] _array;
         private bool _disposed;
@@ -43,7 +42,7 @@ namespace LightDx
             _pipeline = device.CompilePipeline(ShaderSource.FromString(PipelineCode), false, InputTopology.Triangle);
             _pipeline.SetBlender(Blender.AlphaBlender);
 
-            _input = _pipeline.CreateInputDataProcessor<Vertex>();
+            _vertexProcessor = _pipeline.CreateVertexDataProcessor<Vertex>();
             _array = new[] {
                 new Vertex { TexCoord = new Float4(0, 0, 0, 0), Position = new Float4(0, 0, 0, 0) },
                 new Vertex { TexCoord = new Float4(1, 0, 0, 0), Position = new Float4(1, 0, 0, 0) },
@@ -53,7 +52,7 @@ namespace LightDx
                 new Vertex { TexCoord = new Float4(1, 0, 0, 0), Position = new Float4(1, 0, 0, 0) },
                 new Vertex { TexCoord = new Float4(1, 1, 0, 0), Position = new Float4(1, 1, 0, 0) },
             };
-            _buffer = _input.CreateDynamicBuffer(6);
+            _buffer = _vertexProcessor.CreateDynamicBuffer(6);
 
             _constant = _pipeline.CreateConstantBuffer<VSConstant>();
             _pipeline.SetConstant(ConstantUsage.VertexShader, 0, _constant);
@@ -75,7 +74,7 @@ namespace LightDx
             }
 
             _pipeline.Dispose();
-            _input.Dispose();
+            _vertexProcessor.Dispose();
             _buffer.Dispose();
             _constant.Dispose();
 

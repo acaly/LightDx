@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace LightDx
 {
-    public class InputBuffer : IDisposable
+    public class VertexBuffer : IDisposable
     {
         private readonly LightDevice _device;
         private readonly IBufferUpdate _update;
@@ -23,7 +23,7 @@ namespace LightDx
 
         internal bool IsDynamic => _isDynamic;
 
-        internal InputBuffer(LightDevice device, IBufferUpdate update, IntPtr buffer, IntPtr layout,
+        internal VertexBuffer(LightDevice device, IBufferUpdate update, IntPtr buffer, IntPtr layout,
             int stride, int vertexCount, bool isDynamic)
         {
             _device = device;
@@ -37,7 +37,7 @@ namespace LightDx
             _isDynamic = isDynamic;
         }
 
-        ~InputBuffer()
+        ~VertexBuffer()
         {
             Dispose();
         }

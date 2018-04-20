@@ -52,7 +52,7 @@ namespace TextureTriangle
 
                 pipeline.Apply();
 
-                var input = pipeline.CreateInputDataProcessor<Vertex>();
+                var input = pipeline.CreateVertexDataProcessor<Vertex>();
                 var buffer = input.CreateImmutableBuffer(new[] {
                     new Vertex { TexCoord = new Float4(0, 0, 0, 0), Position = new Float4(-0.5f, 0.5f, 0.5f, 1.0f) },
                     new Vertex { TexCoord = new Float4(1, 0, 0, 0), Position = new Float4(0.5f, 0.5f, 0.5f, 1.0f) },

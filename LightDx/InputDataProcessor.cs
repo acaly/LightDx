@@ -12,10 +12,10 @@ namespace LightDx
 {
     internal interface IBufferUpdate
     {
-        void UpdateBuffer(InputBuffer buffer, Array data, int start, int length);
+        void UpdateBuffer(VertexBuffer buffer, Array data, int start, int length);
     }
 
-    public class InputDataProcessor<T> : IDisposable
+    public class VertexDataProcessor<T> : IDisposable
         where T : struct
     {
         private class BufferUpdate : IBufferUpdate
@@ -28,12 +28,12 @@ namespace LightDx
                 _device = device;
             }
 
-            public void UpdateBuffer(InputBuffer buffer, Array data, int start, int length)
+            public void UpdateBuffer(VertexBuffer buffer, Array data, int start, int length)
             {
                 UpdateBufferInternal(buffer, (T[])data, start, length);
             }
 
-            private unsafe void UpdateBufferInternal(InputBuffer buffer, T[] data, int start, int length)
+            private unsafe void UpdateBufferInternal(VertexBuffer buffer, T[] data, int start, int length)
             {
                 int realLength = length == -1 ? data.Length - start : length;
                 if (buffer.IsDynamic)
@@ -64,7 +64,7 @@ namespace LightDx
 
         private bool _disposed;
 
-        internal InputDataProcessor(LightDevice device, IntPtr layout)
+        internal VertexDataProcessor(LightDevice device, IntPtr layout)
         {
             _device = device;
             device.AddComponent(this);
@@ -73,12 +73,12 @@ namespace LightDx
             _bufferUpdate = new BufferUpdate(device);
         }
 
-        ~InputDataProcessor()
+        ~VertexDataProcessor()
         {
             Dispose();
         }
 
-        public unsafe InputBuffer CreateImmutableBuffer(T[] data, int offset = 0, int length = -1)
+        public unsafe VertexBuffer CreateImmutableBuffer(T[] data, int offset = 0, int length = -1)
         {
             int realLength = length == -1 ? data.Length - offset : length;
             BufferDescription bd = new BufferDescription()
@@ -99,11 +99,11 @@ namespace LightDx
             using (var vb = new ComScopeGuard())
             {
                 StructArrayHelper<T>.CreateBuffer(_device.DevicePtr, &bd, &box, out vb.Ptr, ref data[0]).Check();
-                return new InputBuffer(_device, _bufferUpdate, vb.Move(), _inputLayout.AddRef(), _Size, realLength, false);
+                return new VertexBuffer(_device, _bufferUpdate, vb.Move(), _inputLayout.AddRef(), _Size, realLength, false);
             }
         }
         
-        public unsafe InputBuffer CreateDynamicBuffer(int nElement)
+        public unsafe VertexBuffer CreateDynamicBuffer(int nElement)
         {
             BufferDescription bd = new BufferDescription()
             {
@@ -117,7 +117,7 @@ namespace LightDx
             using (var vb = new ComScopeGuard())
             {
                 Device.CreateBuffer(_device.DevicePtr, &bd, null, out vb.Ptr).Check();
-                return new InputBuffer(_device, _bufferUpdate, vb.Move(), _inputLayout.AddRef(), _Size, nElement, true);
+                return new VertexBuffer(_device, _bufferUpdate, vb.Move(), _inputLayout.AddRef(), _Size, nElement, true);
             }
         }
 

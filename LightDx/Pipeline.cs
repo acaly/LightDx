@@ -78,14 +78,14 @@ namespace LightDx
             GC.SuppressFinalize(this);
         }
 
-        public unsafe InputDataProcessor<T> CreateInputDataProcessor<T>()
+        public unsafe VertexDataProcessor<T> CreateVertexDataProcessor<T>()
             where T : struct
         {
             if (_disposed)
             {
                 throw new ObjectDisposedException("Pipeline");
             }
-            var layoutDecl = InputDataProcessor<T>.CreateLayoutFromType();
+            var layoutDecl = VertexDataProcessor<T>.CreateLayoutFromType();
             using (var layout = new ComScopeGuard())
             {
                 fixed (InputElementDescription* d = layoutDecl)
@@ -93,7 +93,7 @@ namespace LightDx
                     Device.CreateInputLayout(_device.DevicePtr, d, (uint)layoutDecl.Length,
                         Blob.GetBufferPointer(_signatureBlob), Blob.GetBufferSize(_signatureBlob), out layout.Ptr).Check();
                 }
-                return new InputDataProcessor<T>(_device, layout.Move());
+                return new VertexDataProcessor<T>(_device, layout.Move());
             }
         }
 
