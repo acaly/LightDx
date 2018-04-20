@@ -48,7 +48,6 @@ More pipeline units:
 * Rasterizer.
 
 Others:
-* Handling device lost and resolution change.
 * Better support for pixel formats.
 * Loading DDS.
 * Some matrix and vector math.
