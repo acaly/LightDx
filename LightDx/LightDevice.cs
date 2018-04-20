@@ -218,42 +218,55 @@ namespace LightDx
             return RenderTargetObject.CreateDepthStencilTarget(this, 20 /*DXGI_FORMAT_D32_FLOAT_S8X24_UINT*/);
         }
 
-        public Pipeline CompilePipeline(ShaderSource shader, bool useGeometryShader, InputTopology topology)
+        public Pipeline CompilePipeline(InputTopology topology, params ShaderSource[] shaders)
         {
-            return CompilePipeline(shader.Data, true, useGeometryShader, topology);
+            var vs = shaders.FirstOrDefault(s => s.ShaderTypes.HasFlag(ShaderType.VertexShader));
+            var gs = shaders.FirstOrDefault(s => s.ShaderTypes.HasFlag(ShaderType.GeometryShader));
+            var ps = shaders.FirstOrDefault(s => s.ShaderTypes.HasFlag(ShaderType.PixelShader));
+            if (ps == null)
+            {
+                throw new ArgumentException("There must be one PixelShader");
+            }
+            return CompilePipeline(vs, gs, ps, topology);
         }
 
-        private unsafe Pipeline CompilePipeline(byte[] shaderCode, bool useVertexShader, bool useGeometryShader, InputTopology topology)
+        private unsafe Pipeline CompilePipeline(ShaderSource srcVS, ShaderSource srcGS, ShaderSource srcPS, InputTopology topology)
         {
             using (ComScopeGuard vertexShader = new ComScopeGuard(), pixelShader = new ComScopeGuard(),
                 geometryShader = new ComScopeGuard(), signatureBlob = new ComScopeGuard())
             {
-                fixed (byte* codePtr = shaderCode)
+                if (srcVS != null) fixed (byte* codePtr = srcVS.Data)
                 {
-                    if (useVertexShader) using (var blob = new ComScopeGuard())
+                    using (var blob = new ComScopeGuard())
                     {
-                        blob.Ptr = Compile(codePtr, shaderCode.Length,
+                        blob.Ptr = Compile(codePtr, srcVS.Data.Length,
                             CompilerStringConstants.VS, CompilerStringConstants.vs_4_0);
                         Device.CreateVertexShader(_device,
                             Blob.GetBufferPointer(blob.Ptr), Blob.GetBufferSize(blob.Ptr), IntPtr.Zero, out vertexShader.Ptr);
                         Native.D3DGetInputSignatureBlob(
                             Blob.GetBufferPointer(blob.Ptr), Blob.GetBufferSize(blob.Ptr), out signatureBlob.Ptr);
                     }
-                    if (useGeometryShader) using (var blob = new ComScopeGuard())
+                }
+                if (srcGS != null) fixed (byte* codePtr = srcGS.Data)
+                {
+                    using (var blob = new ComScopeGuard())
                     {
-                        blob.Ptr = Compile(codePtr, shaderCode.Length,
+                        blob.Ptr = Compile(codePtr, srcGS.Data.Length,
                             CompilerStringConstants.GS, CompilerStringConstants.gs_4_0);
                         Device.CreateGeometryShader(_device, Blob.GetBufferPointer(blob.Ptr), Blob.GetBufferSize(blob.Ptr),
                             IntPtr.Zero, out geometryShader.Ptr);
                     }
-                    using(var blob = new ComScopeGuard())
+                }
+                fixed (byte* codePtr = srcPS.Data)
+                {
+                    using (var blob = new ComScopeGuard())
                     {
-                        blob.Ptr = Compile(codePtr, shaderCode.Length,
+                        blob.Ptr = Compile(codePtr, srcPS.Data.Length,
                             CompilerStringConstants.PS, CompilerStringConstants.ps_4_0);
                         Device.CreatePixelShader(_device, Blob.GetBufferPointer(blob.Ptr), Blob.GetBufferSize(blob.Ptr),
                             IntPtr.Zero, out pixelShader.Ptr);
                     }
-                } //fixed codePtr
+                }
 
                 return new Pipeline(this,
                     vertexShader.Move(), geometryShader.Move(), pixelShader.Move(), signatureBlob.Move(),

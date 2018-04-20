@@ -51,7 +51,8 @@ namespace DynamicTriangle2
                 Pipeline pipeline;
                 using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("DynamicTriangle.Shader.fx"))
                 {
-                    pipeline = device.CompilePipeline(ShaderSource.FromStream(stream), false, InputTopology.Triangle);
+                    pipeline = device.CompilePipeline(InputTopology.Triangle,
+                        ShaderSource.FromStream(stream, ShaderType.VertexShader | ShaderType.PixelShader));
                 }
                 pipeline.Apply();
 
@@ -67,8 +68,8 @@ namespace DynamicTriangle2
                 var indexBuffer = pipeline.CreateImmutableIndexBuffer(new uint[] { 0, 1, 2 });
 
                 var constantBuffer = pipeline.CreateConstantBuffer<ConstantBuffer>();
-                pipeline.SetConstant(ConstantUsage.VertexShader, 0, constantBuffer);
-                pipeline.SetConstant(ConstantUsage.PixelShader, 0, constantBuffer);
+                pipeline.SetConstant(ShaderType.VertexShader, 0, constantBuffer);
+                pipeline.SetConstant(ShaderType.PixelShader, 0, constantBuffer);
 
                 constantBuffer.Value.GlobalAlpha = new Float4(1, 1, 1, 1);
 

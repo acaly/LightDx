@@ -37,7 +37,8 @@ namespace TextureTriangle
                 Pipeline pipeline;
                 using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("TextureTriangle.Shader.fx"))
                 {
-                    pipeline = device.CompilePipeline(ShaderSource.FromStream(stream), false, InputTopology.Triangle);
+                    pipeline = device.CompilePipeline(InputTopology.Triangle,
+                        ShaderSource.FromStream(stream, ShaderType.VertexShader | ShaderType.PixelShader));
                 }
 
                 Texture2D texture;

@@ -39,7 +39,8 @@ namespace LightDx
             _device = device;
             device.AddComponent(this);
 
-            _pipeline = device.CompilePipeline(ShaderSource.FromString(PipelineCode), false, InputTopology.Triangle);
+            _pipeline = device.CompilePipeline(InputTopology.Triangle,
+                ShaderSource.FromString(PipelineCode, ShaderType.VertexShader | ShaderType.PixelShader));
             _pipeline.SetBlender(Blender.AlphaBlender);
 
             _vertexProcessor = _pipeline.CreateVertexDataProcessor<Vertex>();
@@ -55,7 +56,7 @@ namespace LightDx
             _buffer = _vertexProcessor.CreateDynamicBuffer(6);
 
             _constant = _pipeline.CreateConstantBuffer<VSConstant>();
-            _pipeline.SetConstant(ConstantUsage.VertexShader, 0, _constant);
+            _pipeline.SetConstant(ShaderType.VertexShader, 0, _constant);
         }
 
         ~Sprite()

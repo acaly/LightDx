@@ -14,11 +14,12 @@ namespace LightDx
         Triangle = 4,
     }
     
-    public enum ConstantUsage
+    [Flags]
+    public enum ShaderType
     {
-        VertexShader,
-        GeometryShader,
-        PixelShader,
+        VertexShader = 1,
+        GeometryShader = 2,
+        PixelShader = 4,
     }
 
     public class Pipeline : IDisposable
@@ -208,33 +209,31 @@ namespace LightDx
             }
         }
 
-        public void SetConstant(ConstantUsage usage, int slot, AbstractConstantBuffer pipelineConstant)
+        public void SetConstant(ShaderType usage, int slot, AbstractConstantBuffer pipelineConstant)
         {
-            switch (usage)
+            if (usage.HasFlag(ShaderType.VertexShader))
             {
-                case ConstantUsage.VertexShader:
-                    _vsConstants[slot] = pipelineConstant;
-                    if (_isBound)
-                    {
-                        ApplyVSConstantBuffer(slot, pipelineConstant);
-                    }
-                    break;
-                case ConstantUsage.GeometryShader:
-                    _gsConstants[slot] = pipelineConstant;
-                    if (_isBound)
-                    {
-                        ApplyGSConstantBuffer(slot, pipelineConstant);
-                    }
-                    break;
-                case ConstantUsage.PixelShader:
-                    _psConstants[slot] = pipelineConstant;
-                    if (_isBound)
-                    {
-                        ApplyPSConstantBuffer(slot, pipelineConstant);
-                    }
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(usage));
+                _vsConstants[slot] = pipelineConstant;
+                if (_isBound)
+                {
+                    ApplyVSConstantBuffer(slot, pipelineConstant);
+                }
+            }
+            if (usage.HasFlag(ShaderType.GeometryShader))
+            {
+                _gsConstants[slot] = pipelineConstant;
+                if (_isBound)
+                {
+                    ApplyGSConstantBuffer(slot, pipelineConstant);
+                }
+            }
+            if (usage.HasFlag(ShaderType.PixelShader))
+            {
+                _psConstants[slot] = pipelineConstant;
+                if (_isBound)
+                {
+                    ApplyPSConstantBuffer(slot, pipelineConstant);
+                }
             }
         }
 
