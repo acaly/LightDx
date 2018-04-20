@@ -10,7 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace DynamicTriangle
+namespace DynamicTriangle2
 {
     static class Program
     {
@@ -20,6 +20,11 @@ namespace DynamicTriangle
             public Float4 Position;
             [Color]
             public Float4 Color;
+        }
+
+        private struct ConstantBuffer
+        {
+            public float Time;
         }
 
         static void SetCoordinate(LightDevice device, ref Float4 position, double angle)
@@ -60,6 +65,9 @@ namespace DynamicTriangle
 
                 var indexBuffer = pipeline.CreateImmutableIndexBuffer(new uint[] { 0, 1, 2 });
 
+                var constantBuffer = pipeline.CreateConstantBuffer<ConstantBuffer>();
+                pipeline.SetConstant(ConstantUsage.VertexShader, 0, constantBuffer);
+
                 form.Show();
 
                 var clock = Stopwatch.StartNew();
@@ -71,8 +79,10 @@ namespace DynamicTriangle
                     SetCoordinate(device, ref vertexData[0].Position, angle);
                     SetCoordinate(device, ref vertexData[1].Position, angle - distance);
                     SetCoordinate(device, ref vertexData[2].Position, angle + distance);
-
                     buffer.Update(vertexData);
+
+                    constantBuffer.Value.Time = ((float)clock.Elapsed.TotalSeconds % 2) / 2;
+                    constantBuffer.Update();
 
                     target.ClearAll();
                     indexBuffer.DrawAll(buffer);
