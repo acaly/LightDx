@@ -459,7 +459,7 @@ namespace LightDx
                 }
             });
             th.Start();
-            while (_ctrl.Visible && th.ThreadState == ThreadState.Running)
+            while (_ctrl.Visible && th.IsAlive)
             {
                 DoEvents();
                 Thread.Sleep(100);
