@@ -3,6 +3,7 @@ using LightDx.Natives;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -140,11 +141,11 @@ namespace LightDx
                 {
                     format = 41; //DXGI_FORMAT_R32_FLOAT
                 }
-                else if (field.FieldType == typeof(Float4))
+                else if (field.FieldType == typeof(Vector4))
                 {
                     format = 2; //R32G32B32A32_Float
                 }
-                else if (field.FieldType == typeof(Float2))
+                else if (field.FieldType == typeof(Vector2))
                 {
                     format = 16; //DXGI_FORMAT_R32G32_FLOAT
                 }

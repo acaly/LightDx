@@ -2,45 +2,17 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace LightDx
 {
-    public struct Float2
+    public static class VectorHelper
     {
-        public float X, Y;
-
-        public Float2(float x, float y)
+        public static Vector4 WithAlpha(this Color color, float alpha)
         {
-            X = x;
-            Y = y;
-        }
-    }
-
-    public struct Float4
-    {
-        public float X, Y, Z, W;
-
-        public Float4(Color color, float alpha = 1.0f)
-        {
-            X = color.R / 255.0f;
-            Y = color.G / 255.0f;
-            Z = color.B / 255.0f;
-            W = alpha;
-        }
-
-        public static implicit operator Float4(Color c)
-        {
-            return new Float4(c);
-        }
-
-        public Float4(float x, float y, float z, float w)
-        {
-            X = x;
-            Y = y;
-            Z = z;
-            W = w;
+            return new Vector4(color.R / 255.0f, color.G / 255.0f, color.B / 255.0f, alpha);
         }
     }
 }

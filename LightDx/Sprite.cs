@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -14,9 +15,9 @@ namespace LightDx
         private struct Vertex
         {
             [Position]
-            public Float4 Position;
+            public Vector4 Position;
             [TexCoord]
-            public Float4 TexCoord;
+            public Vector4 TexCoord;
         }
 
         private struct VSConstant
@@ -44,13 +45,13 @@ namespace LightDx
 
             _vertexProcessor = _pipeline.CreateVertexDataProcessor<Vertex>();
             _array = new[] {
-                new Vertex { TexCoord = new Float4(0, 0, 0, 0), Position = new Float4(0, 0, 0, 0) },
-                new Vertex { TexCoord = new Float4(1, 0, 0, 0), Position = new Float4(1, 0, 0, 0) },
-                new Vertex { TexCoord = new Float4(0, 1, 0, 0), Position = new Float4(0, 1, 0, 0) },
+                new Vertex { TexCoord = new Vector4(0, 0, 0, 0), Position = new Vector4(0, 0, 0, 0) },
+                new Vertex { TexCoord = new Vector4(1, 0, 0, 0), Position = new Vector4(1, 0, 0, 0) },
+                new Vertex { TexCoord = new Vector4(0, 1, 0, 0), Position = new Vector4(0, 1, 0, 0) },
 
-                new Vertex { TexCoord = new Float4(0, 1, 0, 0), Position = new Float4(0, 1, 0, 0) },
-                new Vertex { TexCoord = new Float4(1, 0, 0, 0), Position = new Float4(1, 0, 0, 0) },
-                new Vertex { TexCoord = new Float4(1, 1, 0, 0), Position = new Float4(1, 1, 0, 0) },
+                new Vertex { TexCoord = new Vector4(0, 1, 0, 0), Position = new Vector4(0, 1, 0, 0) },
+                new Vertex { TexCoord = new Vector4(1, 0, 0, 0), Position = new Vector4(1, 0, 0, 0) },
+                new Vertex { TexCoord = new Vector4(1, 1, 0, 0), Position = new Vector4(1, 1, 0, 0) },
             };
             _buffer = _vertexProcessor.CreateDynamicBuffer(6);
 

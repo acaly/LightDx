@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -308,7 +309,7 @@ namespace LightDx.Natives
             CalliGenerator.GetCalliDelegate<SetShaderDelegate>(9);
         
         public unsafe delegate void ClearRenderTargetViewDelegate(IntPtr @this,
-            IntPtr view, ref Float4 color);
+            IntPtr view, ref Vector4 color);
         public static readonly ClearRenderTargetViewDelegate ClearRenderTargetView =
             CalliGenerator.GetCalliDelegate<ClearRenderTargetViewDelegate>(50);
         

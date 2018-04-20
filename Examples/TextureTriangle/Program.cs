@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Numerics;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -15,9 +16,9 @@ namespace TextureTriangle
         private struct Vertex
         {
             [Position]
-            public Float4 Position;
+            public Vector4 Position;
             [TexCoord]
-            public Float4 TexCoord;
+            public Vector4 TexCoord;
         }
 
         [STAThread]
@@ -55,13 +56,13 @@ namespace TextureTriangle
 
                 var input = pipeline.CreateVertexDataProcessor<Vertex>();
                 var buffer = input.CreateImmutableBuffer(new[] {
-                    new Vertex { TexCoord = new Float4(0, 0, 0, 0), Position = new Float4(-0.5f, 0.5f, 0.5f, 1.0f) },
-                    new Vertex { TexCoord = new Float4(1, 0, 0, 0), Position = new Float4(0.5f, 0.5f, 0.5f, 1.0f) },
-                    new Vertex { TexCoord = new Float4(0, 1, 0, 0), Position = new Float4(-0.5f, -0.5f, 0.5f, 1.0f) },
+                    new Vertex { TexCoord = new Vector4(0, 0, 0, 0), Position = new Vector4(-0.5f, 0.5f, 0.5f, 1.0f) },
+                    new Vertex { TexCoord = new Vector4(1, 0, 0, 0), Position = new Vector4(0.5f, 0.5f, 0.5f, 1.0f) },
+                    new Vertex { TexCoord = new Vector4(0, 1, 0, 0), Position = new Vector4(-0.5f, -0.5f, 0.5f, 1.0f) },
                     
-                    new Vertex { TexCoord = new Float4(0, 1, 0, 0), Position = new Float4(-0.5f, -0.5f, 0.5f, 1.0f) },
-                    new Vertex { TexCoord = new Float4(1, 0, 0, 0), Position = new Float4(0.5f, 0.5f, 0.5f, 1.0f) },
-                    new Vertex { TexCoord = new Float4(1, 1, 0, 0), Position = new Float4(0.5f, -0.5f, 0.5f, 1.0f) },
+                    new Vertex { TexCoord = new Vector4(0, 1, 0, 0), Position = new Vector4(-0.5f, -0.5f, 0.5f, 1.0f) },
+                    new Vertex { TexCoord = new Vector4(1, 0, 0, 0), Position = new Vector4(0.5f, 0.5f, 0.5f, 1.0f) },
+                    new Vertex { TexCoord = new Vector4(1, 1, 0, 0), Position = new Vector4(0.5f, -0.5f, 0.5f, 1.0f) },
                 });
 
                 form.Show();

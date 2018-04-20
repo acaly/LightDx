@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -34,7 +35,7 @@ namespace LightDx
         internal bool IsDepthStencil => _isDepthStencil;
 
         internal LightDevice Device => _device;
-        public Float4 ClearColor { get; set; }
+        public Vector4 ClearColor { get; set; }
 
         //swapchain target: no arguments
 
@@ -155,7 +156,7 @@ namespace LightDx
             }
             else
             {
-                Float4 color = ClearColor;
+                Vector4 color = ClearColor;
                 DeviceContext.ClearRenderTargetView(_device.ContextPtr, _viewPtr, ref color);
             }
         }

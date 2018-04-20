@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Numerics;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -15,9 +16,9 @@ namespace Triangle
         private struct Vertex
         {
             [Position]
-            public Float4 Position;
+            public Vector4 Position;
             [Color]
-            public Float4 Color;
+            public Vector4 Color;
         }
 
         [STAThread]
@@ -44,9 +45,9 @@ namespace Triangle
 
                 var input = pipeline.CreateVertexDataProcessor<Vertex>();
                 var buffer = input.CreateImmutableBuffer(new[] {
-                    new Vertex { Color = Color.Green, Position = new Float4(0.0f, 0.5f, 0.5f, 1.0f) },
-                    new Vertex { Color = Color.Red, Position = new Float4(0.5f, -0.5f, 0.5f, 1.0f) },
-                    new Vertex { Color = Color.Blue, Position = new Float4(-0.5f, -0.5f, 0.5f, 1.0f) },
+                    new Vertex { Color = Color.Green.WithAlpha(1), Position = new Vector4(0.0f, 0.5f, 0.5f, 1.0f) },
+                    new Vertex { Color = Color.Red.WithAlpha(1), Position = new Vector4(0.5f, -0.5f, 0.5f, 1.0f) },
+                    new Vertex { Color = Color.Blue.WithAlpha(1), Position = new Vector4(-0.5f, -0.5f, 0.5f, 1.0f) },
                 });
 
                 var indexBuffer = pipeline.CreateImmutableIndexBuffer(new uint[] { 2, 0, 1 });

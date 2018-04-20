@@ -5,30 +5,31 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
+using System.Numerics;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace DynamicTriangle2
+namespace DynamicTriangle
 {
     static class Program
     {
         private struct Vertex
         {
             [Position]
-            public Float4 Position;
+            public Vector4 Position;
             [Color]
-            public Float4 Color;
+            public Vector4 Color;
         }
 
         private struct ConstantBuffer
         {
-            public Float4 GlobalAlpha;
+            public Vector4 GlobalAlpha;
             public float Time;
         }
 
-        static void SetCoordinate(LightDevice device, ref Float4 position, double angle)
+        static void SetCoordinate(LightDevice device, ref Vector4 position, double angle)
         {
             position.X = 0.5f * (float)Math.Cos(angle) * 600 / device.ScreenWidth;
             position.Y = 0.5f * (float)Math.Sin(angle) * 600 / device.ScreenHeight;
@@ -57,9 +58,9 @@ namespace DynamicTriangle2
                 pipeline.Apply();
 
                 var vertexData = new[] {
-                    new Vertex { Position = new Float4(0, 0, 0.5f, 1), Color = Color.Green },
-                    new Vertex { Position = new Float4(0, 0, 0.5f, 1), Color = Color.Red },
-                    new Vertex { Position = new Float4(0, 0, 0.5f, 1), Color = Color.Blue },
+                    new Vertex { Position = new Vector4(0, 0, 0.5f, 1), Color = Color.Green.WithAlpha(1) },
+                    new Vertex { Position = new Vector4(0, 0, 0.5f, 1), Color = Color.Red.WithAlpha(1) },
+                    new Vertex { Position = new Vector4(0, 0, 0.5f, 1), Color = Color.Blue.WithAlpha(1) },
                 };
 
                 var input = pipeline.CreateVertexDataProcessor<Vertex>();
@@ -71,7 +72,7 @@ namespace DynamicTriangle2
                 pipeline.SetConstant(ShaderType.VertexShader, 0, constantBuffer);
                 pipeline.SetConstant(ShaderType.PixelShader, 0, constantBuffer);
 
-                constantBuffer.Value.GlobalAlpha = new Float4(1, 1, 1, 1);
+                constantBuffer.Value.GlobalAlpha = new Vector4(1, 1, 1, 1);
 
                 form.Show();
                 

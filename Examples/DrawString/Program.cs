@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -23,7 +24,7 @@ namespace DrawString
             using (var device = LightDevice.Create(form))
             {
                 var targetObj = device.GetDefaultTarget();
-                targetObj.ClearColor = new Float4(Color.White, 1);
+                targetObj.ClearColor = Color.White.WithAlpha(1);
 
                 var target = new RenderTarget(targetObj);
                 target.Apply();
