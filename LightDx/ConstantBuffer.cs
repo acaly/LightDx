@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace LightDx
 {
-    public abstract class AbstractPipelineConstant : IDisposable
+    public abstract class AbstractConstantBuffer : IDisposable
     {
         protected LightDevice _device;
         protected IntPtr _buffer;
@@ -16,7 +16,7 @@ namespace LightDx
 
         internal IntPtr BufferPtr => _buffer;
 
-        internal protected AbstractPipelineConstant(LightDevice device, IntPtr buffer)
+        internal protected AbstractConstantBuffer(LightDevice device, IntPtr buffer)
         {
             _device = device;
             device.AddComponent(this);
@@ -24,7 +24,7 @@ namespace LightDx
             _buffer = buffer;
         }
 
-        ~AbstractPipelineConstant()
+        ~AbstractConstantBuffer()
         {
             Dispose();
         }
@@ -43,12 +43,12 @@ namespace LightDx
         }
     }
 
-    public class PipelineConstant<T> : AbstractPipelineConstant
+    public class ConstantBuffer<T> : AbstractConstantBuffer
         where T : struct
     {
         private static readonly int _Size = Marshal.SizeOf<T>();
 
-        internal PipelineConstant(LightDevice device, IntPtr buffer)
+        internal ConstantBuffer(LightDevice device, IntPtr buffer)
             : base(device, buffer)
         {
         }

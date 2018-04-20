@@ -83,7 +83,7 @@
     <Compile Include="NativeHelper.cs" />
     <Compile Include="Natives.cs" />
     <Compile Include="Pipeline.cs" />
-    <Compile Include="PipelineConstant.cs" />
+    <Compile Include="ConstantBuffer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RenderTarget.cs" />
     <Compile Include="Samplers.cs" />

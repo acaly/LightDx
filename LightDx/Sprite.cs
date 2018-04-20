@@ -30,7 +30,7 @@ namespace LightDx
         private readonly Pipeline _pipeline;
         private readonly VertexDataProcessor<Vertex> _vertexProcessor;
         private readonly VertexBuffer _buffer;
-        private readonly PipelineConstant<VSConstant> _constant;
+        private readonly ConstantBuffer<VSConstant> _constant;
         private readonly Vertex[] _array;
         private bool _disposed;
 

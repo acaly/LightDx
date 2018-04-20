@@ -36,7 +36,7 @@ namespace LightDx
         //only 1 viewport
         private Viewport _viewport;
 
-        private Dictionary<int, AbstractPipelineConstant> _vsConstants = new Dictionary<int, AbstractPipelineConstant>();
+        private Dictionary<int, AbstractConstantBuffer> _vsConstants = new Dictionary<int, AbstractConstantBuffer>();
         private Dictionary<int, Texture2D> _resources = new Dictionary<int, Texture2D>();
 
         private bool _isBound;
@@ -152,7 +152,7 @@ namespace LightDx
             }
         }
 
-        public unsafe PipelineConstant<T> CreateConstantBuffer<T>()
+        public unsafe ConstantBuffer<T> CreateConstantBuffer<T>()
             where T : struct
         {
             if (_disposed)
@@ -172,7 +172,7 @@ namespace LightDx
             using (var cb = new ComScopeGuard())
             {
                 Device.CreateBuffer(_device.DevicePtr, &bd, null, out cb.Ptr).Check();
-                return new PipelineConstant<T>(_device, cb.Move());
+                return new ConstantBuffer<T>(_device, cb.Move());
             }
         }
 
@@ -206,7 +206,7 @@ namespace LightDx
             }
         }
 
-        public void SetConstant(ConstantUsage usage, int slot, AbstractPipelineConstant pipelineConstant)
+        public void SetConstant(ConstantUsage usage, int slot, AbstractConstantBuffer pipelineConstant)
         {
             switch (usage)
             {
@@ -245,7 +245,7 @@ namespace LightDx
             DeviceContext.PSSetShaderResources(_device.ContextPtr, (uint)slot, 1, ref view);
         }
 
-        private void ApplyVSConstantBuffer(int slot, AbstractPipelineConstant pipelineConstant)
+        private void ApplyVSConstantBuffer(int slot, AbstractConstantBuffer pipelineConstant)
         {
             var buffer = pipelineConstant?.BufferPtr ?? IntPtr.Zero;
             DeviceContext.VSSetConstantBuffers(_device.ContextPtr, (uint)slot, 1, ref buffer);
