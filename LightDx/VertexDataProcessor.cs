@@ -150,6 +150,10 @@ namespace LightDx
                 {
                     format = 2; //R32G32B32A32_Float
                 }
+                else if (field.FieldType == typeof(Vector3))
+                {
+                    format = 6; //DXGI_FORMAT_R32G32B32_FLOAT
+                }
                 else if (field.FieldType == typeof(Vector2))
                 {
                     format = 16; //DXGI_FORMAT_R32G32_FLOAT

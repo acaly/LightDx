@@ -15,6 +15,7 @@ namespace LightDx.InputAttributes
         internal static readonly IntPtr POSITION = Marshal.StringToHGlobalAnsi("POSITION");
         internal static readonly IntPtr COLOR = Marshal.StringToHGlobalAnsi("COLOR");
         internal static readonly IntPtr TEXCOORD = Marshal.StringToHGlobalAnsi("TEXCOORD");
+        internal static readonly IntPtr NORMAL = Marshal.StringToHGlobalAnsi("NORMAL");
     }
 
     public sealed class PositionAttribute : InputAttribute
@@ -53,6 +54,19 @@ namespace LightDx.InputAttributes
         internal override IntPtr SemanticName
         {
             get { return TEXCOORD; }
+        }
+    }
+
+    public sealed class NormalAttribute : InputAttribute
+    {
+        public NormalAttribute(int id = 0)
+        {
+            SemanticIndex = id;
+        }
+
+        internal override IntPtr SemanticName
+        {
+            get { return NORMAL; }
         }
     }
 }
