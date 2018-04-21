@@ -17,12 +17,11 @@ namespace LightDx
     }
 
     public sealed class VertexDataProcessor<T> : IDisposable
-        where T : struct
+        where T : unmanaged
     {
         private class BufferUpdate : IBufferUpdate
         {
             private LightDevice _device;
-            private readonly uint[] _updateSubresourceBox = new uint[] { 0, 0, 0, 0, 1, 1 };
 
             public BufferUpdate(LightDevice device)
             {
@@ -43,16 +42,19 @@ namespace LightDx
                     DeviceContext.Map(_device.ContextPtr, buffer.BufferPtr, 0,
                         4 /* WRITE_DISCARD */, 0, &ret).Check();
 
-                    StructArrayHelper<T>.CopyArray(ret.pSysMem, data, _Size * start, _Size * realLength);
+                    fixed (T* pData = &data[start])
+                    {
+                        Buffer.MemoryCopy(pData, ret.pSysMem.ToPointer(), _Size * realLength, _Size * realLength);
+                    }
 
                     DeviceContext.Unmap(_device.ContextPtr, buffer.BufferPtr, 0);
                 }
                 else
                 {
-                    _updateSubresourceBox[3] = (uint)(realLength * _Size);
-                    fixed (uint* pBox = _updateSubresourceBox)
+                    var box = stackalloc uint[6] { 0, 0, 0, (uint)(realLength * _Size), 1, 1 };
+                    fixed (T* pData = &data[start])
                     {
-                        StructArrayHelper<T>.UpdateSubresource(_device.ContextPtr, buffer.BufferPtr, 0, pBox, ref data[start], 0, 0);
+                        DeviceContext.UpdateSubresource(_device.ContextPtr, buffer.BufferPtr, 0, box, pData, 0, 0);
                     }
                 }
             }
@@ -96,16 +98,19 @@ namespace LightDx
                 MiscFlags = 0,
                 StructureByteStride = (uint)_Size
             };
-            DataBox box = new DataBox
+            fixed (T* pData = &data[offset])
             {
-                DataPointer = null, //the pointer is set (after pinned) in _CreateBufferMethod
-                RowPitch = 0,
-                SlicePitch = 0,
-            };
-            using (var vb = new ComScopeGuard())
-            {
-                StructArrayHelper<T>.CreateBuffer(_device.DevicePtr, &bd, &box, out vb.Ptr, ref data[0]).Check();
-                return new VertexBuffer(_device, _bufferUpdate, vb.Move(), _inputLayout.AddRef(), _Size, realLength, false);
+                DataBox box = new DataBox
+                {
+                    DataPointer = pData,
+                    RowPitch = 0,
+                    SlicePitch = 0,
+                };
+                using (var vb = new ComScopeGuard())
+                {
+                    Device.CreateBuffer(_device.DevicePtr, &bd, &box, out vb.Ptr).Check();
+                    return new VertexBuffer(_device, _bufferUpdate, vb.Move(), _inputLayout.AddRef(), _Size, realLength, false);
+                }
             }
         }
         

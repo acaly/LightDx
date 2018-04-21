@@ -343,6 +343,11 @@ namespace LightDx.Natives
         public static readonly UnmapDelegate Unmap =
             CalliGenerator.GetCalliDelegate<UnmapDelegate>(15);
 
+        public unsafe delegate void UpdateSubresourceDelegate(IntPtr @this,
+            IntPtr r, int subres, uint* box, void* data, int p1, int p2);
+        public static readonly UpdateSubresourceDelegate UpdateSubresource =
+            CalliGenerator.GetCalliDelegate<UpdateSubresourceDelegate>(48);
+
         public delegate void OMSetBlendStateDelegate(IntPtr @this,
             IntPtr b, IntPtr color, uint mask);
         public static readonly OMSetBlendStateDelegate OMSetBlendState =

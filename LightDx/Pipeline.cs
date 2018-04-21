@@ -112,7 +112,7 @@ namespace LightDx
         }
 
         public unsafe VertexDataProcessor<T> CreateVertexDataProcessor<T>()
-            where T : struct
+            where T : unmanaged
         {
             if (_disposed)
             {
@@ -130,10 +130,14 @@ namespace LightDx
             }
         }
 
-        public unsafe IndexBuffer CreateImmutableIndexBuffer(Array data, int offset = 0, int length = -1)
+        public unsafe IndexBuffer CreateImmutableIndexBuffer<T>(T[] data, int offset = 0, int length = -1) where T : unmanaged
         {
             int realLength = length == -1 ? data.Length - offset : length;
-            int indexSize = data is ushort[] ? 2 : data is uint[] ? 4 : throw new ArgumentException(nameof(data));
+            int indexSize = sizeof(T);
+            if (indexSize != 2 && indexSize != 4)
+            {
+                throw new ArgumentException("Invalid index size: " + indexSize);
+            }
             BufferDescription bd = new BufferDescription()
             {
                 ByteWidth = (uint)(indexSize * realLength),
@@ -143,23 +147,19 @@ namespace LightDx
                 MiscFlags = 0,
                 StructureByteStride = (uint)indexSize,
             };
-            DataBox box = new DataBox
+            fixed (T* pData = &data[offset])
             {
-                DataPointer = null, //the pointer is set (after pinned) in _CreateBufferMethod
-                RowPitch = 0,
-                SlicePitch = 0,
-            };
-            using (var vb = new ComScopeGuard())
-            {
-                if (indexSize == 2)
+                DataBox box = new DataBox
                 {
-                    StructArrayHelper<ushort>.CreateBuffer(_device.DevicePtr, &bd, &box, out vb.Ptr, ref ((ushort[])data)[0]).Check();
-                }
-                else
+                    DataPointer = pData,
+                    RowPitch = 0,
+                    SlicePitch = 0,
+                };
+                using (var vb = new ComScopeGuard())
                 {
-                    StructArrayHelper<uint>.CreateBuffer(_device.DevicePtr, &bd, &box, out vb.Ptr, ref ((uint[])data)[0]).Check();
+                    Device.CreateBuffer(_device.DevicePtr, &bd, &box, out vb.Ptr).Check();
+                    return new IndexBuffer(_device, vb.Move(), indexSize * 8, realLength);
                 }
-                return new IndexBuffer(_device, vb.Move(), indexSize * 8, realLength);
             }
         }
 
@@ -186,7 +186,7 @@ namespace LightDx
         }
 
         public unsafe ConstantBuffer<T> CreateConstantBuffer<T>()
-            where T : struct
+            where T : unmanaged
         {
             if (_disposed)
             {

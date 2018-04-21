@@ -58,19 +58,21 @@ namespace LightDx
                 _bitWidth == 16 ? 57u /* DXGI_FORMAT_R16_UINT */ : 42u /* DXGI_FORMAT_R32_UINT */, 0);
         }
 
-        public unsafe void UpdateDynamic(Array data, int startIndex = 0, int length = -1)
+        public unsafe void UpdateDynamic<T>(T[] data, int startIndex = 0, int length = -1) where T : unmanaged
         {
             int realLength = length == -1 ? data.Length - startIndex : length;
             SubresourceData ret;
             DeviceContext.Map(_device.ContextPtr, _ptr, 0, 4 /* WRITE_DISCARD */, 0, &ret).Check();
 
-            if (_bitWidth == 16)
+            if (_bitWidth != sizeof(T) * 8)
             {
-                StructArrayHelper<ushort>.CopyArray(ret.pSysMem, (ushort[])data, 2 * startIndex, 2 * realLength);
+                throw new ArgumentException("Invalid index size");
             }
-            else if (_bitWidth == 32)
+
+            var copyLen = sizeof(T) * realLength;
+            fixed (T* pData = &data[startIndex])
             {
-                StructArrayHelper<uint>.CopyArray(ret.pSysMem, (uint[])data, 4 * startIndex, 4 * realLength);
+                Buffer.MemoryCopy(pData, ret.pSysMem.ToPointer(), copyLen, copyLen);
             }
 
             DeviceContext.Unmap(_device.ContextPtr, _ptr, 0);

@@ -53,10 +53,10 @@ namespace LightDx
         }
     }
 
-    public sealed class ConstantBuffer<T> : AbstractConstantBuffer
-        where T : struct
+    public unsafe sealed class ConstantBuffer<T> : AbstractConstantBuffer
+        where T : unmanaged
     {
-        private static readonly int _Size = Marshal.SizeOf<T>();
+        private static readonly int _Size = sizeof(T);
 
         internal ConstantBuffer(LightDevice device, IntPtr buffer)
             : base(device, buffer)
@@ -65,13 +65,16 @@ namespace LightDx
         
         public T Value;
 
-        public unsafe void Update()
+        public void Update()
         {
             //Use Map/Unmap instead of UpdateSubresource.
             SubresourceData ret;
             DeviceContext.Map(_device.ContextPtr, _buffer, 0,
                 4 /* WRITE_DISCARD */, 0, &ret).Check();
-            StructArrayHelper<T>.CopyStruct(ret.pSysMem, ref Value, 0, _Size);
+            fixed (T* ptr = &Value)
+            {
+                Buffer.MemoryCopy(ptr, ret.pSysMem.ToPointer(), _Size, _Size);
+            }
             DeviceContext.Unmap(_device.ContextPtr, _buffer, 0);
         }
     }
