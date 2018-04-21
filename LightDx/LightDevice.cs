@@ -36,6 +36,7 @@ namespace LightDx
 
         public int ScreenWidth => _width;
         public int ScreenHeight => _height;
+        public int Dpi => _dpi;
 
         private RenderTargetObject _defaultRenderTarget;
 
@@ -43,14 +44,21 @@ namespace LightDx
 
         private volatile MultithreadLoop _currentLoop;
         private AutoResetEvent _ctrlResized = new AutoResetEvent(false);
+        private AutoResetEvent _ctrlDpiChanged = new AutoResetEvent(false);
 
         internal RenderTarget CurrentTarget { get; set; }
         internal Pipeline CurrentPipeline { get; set; }
 
         public bool AutoResize { get; set; } = true;
         public event EventHandler ResolutionChanged;
+        public event EventHandler DpiChanged;
         internal event Action ReleaseRenderTargets;
         internal event Action RebuildRenderTargets;
+
+        static LightDevice()
+        {
+            TestGetDpiForMonitor();
+        }
         
         private LightDevice()
         {
@@ -79,8 +87,7 @@ namespace LightDx
                     var c = _components[index];
                     _components.RemoveAt(index);
 
-                    IDisposable cobj;
-                    if (c.TryGetTarget(out cobj))
+                    if (c.TryGetTarget(out IDisposable cobj))
                     {
                         cobj.Dispose();
                     }
@@ -135,6 +142,7 @@ namespace LightDx
                 ret._form = ctrl.FindForm();
                 ret._width = width;
                 ret._height = height;
+                ret._dpi = GetDpiForWindow(ret._form.Handle);
             }
 
             try
@@ -471,7 +479,7 @@ namespace LightDx
             _currentLoop = loop;
             while (_currentLoop == loop && !loop.Stop && _ctrl.Visible)
             {
-                CheckCtrlResize();
+                CheckRenderLoopEvents();
                 frame();
                 DoEvents();
             }
@@ -485,7 +493,7 @@ namespace LightDx
             {
                 while (_currentLoop == loop && !loop.Stop)
                 {
-                    CheckCtrlResize();
+                    CheckRenderLoopEvents();
                     frame();
                 }
             });
@@ -511,8 +519,11 @@ namespace LightDx
 
         #region Managed Events
 
+        //Note that update mechanism is different for dpi compared with size.
+
         private bool _isInResize;
         private volatile int _prevClientWidth, _prevClientHeight;
+        private volatile int _dpi;
 
         private void AddEventHandlers()
         {
@@ -553,13 +564,19 @@ namespace LightDx
             if (newSize != new Size(_prevClientWidth, _prevClientHeight))
             {
                 _ctrlResized.Reset();
+                var dpi = GetDpiForWindow(_form.Handle);
                 _prevClientWidth = newSize.Width;
                 _prevClientHeight = newSize.Height;
                 _ctrlResized.Set();
+                if (dpi != _dpi)
+                {
+                    _dpi = dpi;
+                    _ctrlDpiChanged.Set();
+                }
             }
         }
 
-        private void CheckCtrlResize()
+        private void CheckRenderLoopEvents()
         {
             //WaitOne(0) checks state without blocking
             if (_ctrlResized.WaitOne(0))
@@ -569,6 +586,45 @@ namespace LightDx
                     ChangeResolution(_prevClientWidth, _prevClientHeight);
                 }
             }
+            if (_ctrlDpiChanged.WaitOne(0))
+            {
+                DpiChanged?.Invoke(this, EventArgs.Empty);
+            }
+        }
+
+        #endregion
+
+        #region Dpi awareness
+        
+        [DllImport("user32.dll")]
+        private static extern IntPtr MonitorFromWindow(IntPtr hWnd, uint flags);
+
+        [DllImport("shcore.dll")]
+        private static extern uint GetDpiForMonitor(IntPtr hMonitor, uint type, out uint dpiX, out uint dpiY);
+
+        private static bool s_GetDpiForMonitorSupported;
+
+        private static void TestGetDpiForMonitor()
+        {
+            try
+            {
+                GetDpiForMonitor(IntPtr.Zero, 0, out var x, out var y);
+                s_GetDpiForMonitorSupported = true;
+            }
+            catch
+            {
+                s_GetDpiForMonitorSupported = false;
+            }
+        }
+
+        private static int GetDpiForWindow(IntPtr hWnd)
+        {
+            var monitor = MonitorFromWindow(hWnd, 2 /*MONITOR_DEFAULTTONEAREST*/) ;
+            if (GetDpiForMonitor(monitor, 0 /*MDT_EFFECTIVE_DPI*/, out var x, out var y) == 0)
+            {
+                return (int)x;
+            }
+            return 96; //Use default if failed
         }
 
         #endregion
