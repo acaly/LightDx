@@ -323,17 +323,25 @@ namespace LightDx
             }
         }
 
-        public Texture2D CreateTexture2D(Bitmap bitmap)
+        public Texture2D CreateTexture2D(Stream stream)
         {
-            using (ComScopeGuard tex = new ComScopeGuard(), view = new ComScopeGuard())
+            byte[] buffer = new byte[4];
+            if (stream.Length > 4)
             {
-                tex.Ptr = InternalCreateTexture2D(bitmap);
-                Device.CreateShaderResourceView(_device, tex.Ptr, IntPtr.Zero, out view.Ptr).Check();
-                return new Texture2D(this, tex.Move(), view.Move(), bitmap.Width, bitmap.Height);
+                stream.Read(buffer, 0, 4);
+                stream.Seek(0, SeekOrigin.Begin);
+                if (DDSReader.CheckHeader(buffer))
+                {
+                    return DDSReader.Load(this, stream);
+                }
+            }
+            using (var bitmap = new Bitmap(stream))
+            {
+                return CreateTexture2D(bitmap);
             }
         }
 
-        private unsafe IntPtr InternalCreateTexture2D(Bitmap bitmap)
+        public Texture2D CreateTexture2D(Bitmap bitmap)
         {
             var rect = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
 
@@ -341,49 +349,38 @@ namespace LightDx
             {
                 using (var b2 = bitmap.Clone(rect, System.Drawing.Imaging.PixelFormat.Format32bppArgb))
                 {
-                    return InternalCreateTexture2D(b2);
+                    return CreateTexture2D(b2);
                 }
             }
 
-            Texture2DDescription t2d = new Texture2DDescription
+            System.Drawing.Imaging.BitmapData locked = null;
+            try
             {
-                Width = (uint)bitmap.Width,
-                Height = (uint)bitmap.Height,
-                MipLevels = 1,
-                ArraySize = 1,
-                Format = 87, //DXGI_FORMAT_B8G8R8A8_UNORM,
-                SampleCount = 1,
-                SampleQuality = 0,
-                Usage = 1, //immutable
-                BindFlags = 8, //ShaderResource
-                CPUAccessFlags = 0,
-                MiscFlags = 0,
-            };
-            var locked = bitmap.LockBits(rect, System.Drawing.Imaging.ImageLockMode.ReadOnly,
-                System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-            SubresourceData data = new SubresourceData
+                locked = bitmap.LockBits(rect, System.Drawing.Imaging.ImageLockMode.ReadOnly,
+                    System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                return CreateTexture2D(bitmap.Width, bitmap.Height, 87 /*DXGI_FORMAT_B8G8R8A8_UNORM*/,
+                    locked.Scan0, locked.Stride, false);
+            }
+            finally
             {
-                pSysMem = locked.Scan0,
-                SysMemPitch = (uint)locked.Stride,
-            };
-            
-            Device.CreateTexture2D(_device, ref t2d, new IntPtr(&data), out var tex).Check();
-
-            bitmap.UnlockBits(locked);
-            return tex;
+                if (locked != null)
+                {
+                    bitmap.UnlockBits(locked);
+                }
+            }
         }
 
-        public Texture2D CreateTexture2D(int width, int height, int format)
+        public Texture2D CreateTexture2D(int width, int height, int format, IntPtr data, int stride, bool isDynamic)
         {
             using (ComScopeGuard tex = new ComScopeGuard(), view = new ComScopeGuard())
             {
-                tex.Ptr = InternalCreateTexture2D(width, height, format);
+                tex.Ptr = InternalCreateTexture2D(width, height, format, data, stride, isDynamic);
                 Device.CreateShaderResourceView(_device, tex.Ptr, IntPtr.Zero, out view.Ptr).Check();
                 return new Texture2D(this, tex.Move(), view.Move(), width, height);
             }
         }
 
-        private IntPtr InternalCreateTexture2D(int width, int height, int format)
+        private unsafe IntPtr InternalCreateTexture2D(int width, int height, int format, IntPtr data, int stride, bool isDynamic)
         {
             Texture2DDescription t2d = new Texture2DDescription
             {
@@ -391,18 +388,30 @@ namespace LightDx
                 Height = (uint)height,
                 MipLevels = 1,
                 ArraySize = 1,
-                Format = (uint)format, //87=DXGI_FORMAT_B8G8R8A8_UNORM,
+                Format = (uint)format,
                 SampleCount = 1,
                 SampleQuality = 0,
-                Usage = 2, //2=dynamic
+                Usage = isDynamic ? 2u : 1u, //2:dynamic, 1:immutable
                 BindFlags = 8, //ShaderResource
-                CPUAccessFlags = 0x10000, //write only
+                CPUAccessFlags = isDynamic ? 0x10000u : 0, //0x10000u: write only
                 MiscFlags = 0,
             };
 
-            Device.CreateTexture2D(_device, ref t2d, IntPtr.Zero, out var tex).Check();
-            
-            return tex;
+            if (data != IntPtr.Zero)
+            {
+                SubresourceData subres = new SubresourceData
+                {
+                    pSysMem = data,
+                    SysMemPitch = (uint)stride,
+                };
+                Device.CreateTexture2D(_device, ref t2d, new IntPtr(&subres), out var tex).Check();
+                return tex;
+            }
+            else
+            {
+                Device.CreateTexture2D(_device, ref t2d, IntPtr.Zero, out var tex).Check();
+                return tex;
+            }
         }
 
         public void Present(bool vsync = false)

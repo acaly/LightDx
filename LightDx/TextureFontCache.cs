@@ -48,7 +48,7 @@ namespace LightDx
 
         protected override Texture2D CreateBitmap(int w, int h)
         {
-            var ret = _device.CreateTexture2D(w, h, 65); //A8_UNORM
+            var ret = _device.CreateTexture2D(w, h, 65 /*A8_UNORM*/, IntPtr.Zero, 0, true);
             //Possible memory leak (only when the new fails). Won't fix.
             _memCache.Add(ret,
                 new MemoryCacheItem(Marshal.AllocHGlobal(w * h * PixelSize), w * PixelSize, h));
