@@ -191,16 +191,32 @@ namespace LightDx
             Dispose(true);
         }
 
-        public void ChangeResolution(int width, int height)
+        public unsafe void ChangeResolution(int width, int height)
         {
             _width = width;
             _height = height;
 
+            //Clear the current render target
+            DeviceContext.OMSetRenderTargets(_context, 0, null, IntPtr.Zero);
+
             //Release all target objects, including _defaultRenderTarget
             ReleaseRenderTargets?.Invoke();
 
+            //Release the default render view (containing reference to the back buffer)
+            NativeHelper.Dispose(ref _defaultRenderView);
+
             //Resize swapchain
-            SwapChain.ResizeBuffers(_swapchain, 1, (uint)width, (uint)height, 28 /*R8G8B8A8_UNorm*/, 0);
+            SwapChain.ResizeBuffers(_swapchain, 1, (uint)width, (uint)height, 28 /*R8G8B8A8_UNorm*/, 0).Check();
+
+            //Get the new back buffer and create default view
+            {
+                using (ComScopeGuard backBuffer = new ComScopeGuard(), renderView = new ComScopeGuard())
+                {
+                    SwapChain.GetBuffer(_swapchain, 0, Guids.Texture2D, out backBuffer.Ptr).Check();
+                    Device.CreateRenderTargetView(_device, backBuffer.Ptr, IntPtr.Zero, out renderView.Ptr).Check();
+                    _defaultRenderView = renderView.Move();
+                }
+            }
 
             //Rebuild all target objects
             RebuildRenderTargets?.Invoke();
@@ -224,9 +240,9 @@ namespace LightDx
 
         public Pipeline CompilePipeline(InputTopology topology, params ShaderSource[] shaders)
         {
-            var vs = shaders.FirstOrDefault(s => s.ShaderTypes.HasFlag(ShaderType.VertexShader));
-            var gs = shaders.FirstOrDefault(s => s.ShaderTypes.HasFlag(ShaderType.GeometryShader));
-            var ps = shaders.FirstOrDefault(s => s.ShaderTypes.HasFlag(ShaderType.PixelShader));
+            var vs = shaders.FirstOrDefault(s => s.ShaderTypes.HasFlag(ShaderType.Vertex));
+            var gs = shaders.FirstOrDefault(s => s.ShaderTypes.HasFlag(ShaderType.Geometry));
+            var ps = shaders.FirstOrDefault(s => s.ShaderTypes.HasFlag(ShaderType.Pixel));
             if (ps == null)
             {
                 throw new ArgumentException("There must be one PixelShader");
@@ -273,9 +289,7 @@ namespace LightDx
                 }
 
                 return new Pipeline(this,
-                    vertexShader.Move(), geometryShader.Move(), pixelShader.Move(), signatureBlob.Move(),
-                    new Viewport { Width = _width, Height = _height, MaxDepth = 1.0f },
-                    topology);
+                    vertexShader.Move(), geometryShader.Move(), pixelShader.Move(), signatureBlob.Move(), topology);
             } //using
         }
 

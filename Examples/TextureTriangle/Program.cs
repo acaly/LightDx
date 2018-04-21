@@ -34,13 +34,9 @@ namespace TextureTriangle
             {
                 var target = new RenderTarget(device.GetDefaultTarget());
                 target.Apply();
-
-                Pipeline pipeline;
-                using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("TextureTriangle.Shader.fx"))
-                {
-                    pipeline = device.CompilePipeline(InputTopology.Triangle,
-                        ShaderSource.FromStream(stream, ShaderType.VertexShader | ShaderType.PixelShader));
-                }
+                
+                Pipeline pipeline = device.CompilePipeline(InputTopology.Triangle,
+                    ShaderSource.FromResource("Shader.fx", ShaderType.Vertex | ShaderType.Pixel));
 
                 Texture2D texture;
                 using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("TextureTriangle.Hiyori.png"))

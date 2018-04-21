@@ -17,9 +17,9 @@ namespace LightDx
     [Flags]
     public enum ShaderType
     {
-        VertexShader = 1,
-        GeometryShader = 2,
-        PixelShader = 4,
+        Vertex = 1,
+        Geometry = 2,
+        Pixel = 4,
     }
 
     public sealed class Pipeline : IDisposable
@@ -44,17 +44,23 @@ namespace LightDx
 
         private bool _isBound;
 
-        internal Pipeline(LightDevice device, IntPtr v, IntPtr g, IntPtr p, IntPtr sign, Viewport vp, InputTopology topology)
+        internal Pipeline(LightDevice device, IntPtr v, IntPtr g, IntPtr p, IntPtr sign, InputTopology topology)
         {
             _device = device;
             device.AddComponent(this);
+            _device.ResolutionChanged += DeviceBufferResized;
 
             _vertex = v;
             _geometry = g;
             _pixel = p;
             _signatureBlob = sign;
-
-            _viewport = vp;
+            
+            _viewport = new Viewport
+            {
+                Width = _device.ScreenWidth,
+                Height = _device.ScreenHeight,
+                MaxDepth = 1.0f,
+            };
             _topology = topology;
         }
 
@@ -83,11 +89,26 @@ namespace LightDx
 
             if (disposing)
             {
+                _device.ResolutionChanged -= DeviceBufferResized;
                 _device.RemoveComponent(this);
             }
 
             _disposed = true;
             GC.SuppressFinalize(this);
+        }
+
+        private void DeviceBufferResized(object sender, EventArgs e)
+        {
+            _viewport = new Viewport
+            {
+                Width = _device.ScreenWidth,
+                Height = _device.ScreenHeight,
+                MaxDepth = 1.0f,
+            };
+            if (_isBound)
+            {
+                ApplyViewport();
+            }
         }
 
         public unsafe VertexDataProcessor<T> CreateVertexDataProcessor<T>()
@@ -220,7 +241,7 @@ namespace LightDx
 
         public void SetConstant(ShaderType usage, int slot, AbstractConstantBuffer pipelineConstant)
         {
-            if (usage.HasFlag(ShaderType.VertexShader))
+            if (usage.HasFlag(ShaderType.Vertex))
             {
                 _vsConstants[slot] = pipelineConstant;
                 if (_isBound)
@@ -228,7 +249,7 @@ namespace LightDx
                     ApplyVSConstantBuffer(slot, pipelineConstant);
                 }
             }
-            if (usage.HasFlag(ShaderType.GeometryShader))
+            if (usage.HasFlag(ShaderType.Geometry))
             {
                 _gsConstants[slot] = pipelineConstant;
                 if (_isBound)
@@ -236,7 +257,7 @@ namespace LightDx
                     ApplyGSConstantBuffer(slot, pipelineConstant);
                 }
             }
-            if (usage.HasFlag(ShaderType.PixelShader))
+            if (usage.HasFlag(ShaderType.Pixel))
             {
                 _psConstants[slot] = pipelineConstant;
                 if (_isBound)
@@ -246,16 +267,20 @@ namespace LightDx
             }
         }
 
-        private unsafe void ApplyShaders()
+        private unsafe void ApplyViewport()
+        {
+            fixed (Viewport* ptr = &_viewport)
+            {
+                DeviceContext.RSSetViewports(_device.ContextPtr, 1, ptr);
+            }
+        }
+
+        private void ApplyShaders()
         {
             DeviceContext.IASetPrimitiveTopology(_device.ContextPtr, (uint)_topology);
             DeviceContext.VSSetShader(_device.ContextPtr, _vertex, IntPtr.Zero, 0);
             DeviceContext.GSSetShader(_device.ContextPtr, _geometry, IntPtr.Zero, 0);
             DeviceContext.PSSetShader(_device.ContextPtr, _pixel, IntPtr.Zero, 0);
-            fixed (Viewport* ptr = &_viewport)
-            {
-                DeviceContext.RSSetViewports(_device.ContextPtr, 1, ptr);
-            }
         }
 
         private void ApplyBlender()
@@ -308,6 +333,7 @@ namespace LightDx
             _isBound = true;
 
             ApplyShaders();
+            ApplyViewport();
             ApplyBlender();
             //TODO Samplers
             //TODO depth

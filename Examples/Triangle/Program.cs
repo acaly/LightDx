@@ -34,13 +34,9 @@ namespace Triangle
             {
                 var target = new RenderTarget(device.GetDefaultTarget());
                 target.Apply();
-
-                Pipeline pipeline;
-                using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Triangle.Shader.fx"))
-                {
-                    pipeline = device.CompilePipeline(InputTopology.Triangle,
-                        ShaderSource.FromStream(stream, ShaderType.VertexShader | ShaderType.PixelShader));;
-                }
+                
+                Pipeline pipeline = device.CompilePipeline(InputTopology.Triangle,
+                    ShaderSource.FromResource("Shader.fx", ShaderType.Vertex | ShaderType.Pixel));
                 pipeline.Apply();
 
                 var input = pipeline.CreateVertexDataProcessor<Vertex>();

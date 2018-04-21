@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -15,7 +16,25 @@ namespace LightDx
         private ShaderSource(Stream stream, ShaderType types)
         {
             stream.Seek(0, SeekOrigin.Begin);
-            byte[] shaderCode = new byte[stream.Length];
+
+            int start = 0;
+
+            //Skip UTF-8 BOM
+            if (stream.Length > 3)
+            {
+                byte[] bom = new byte[3];
+                stream.Read(bom, 0, 3);
+                if (bom[0] == 0xEF && bom[1] == 0xBB && bom[2] == 0xBF)
+                {
+                    start = 3;
+                }
+                else
+                {
+                    stream.Seek(0, SeekOrigin.Begin);
+                }
+            }
+
+            byte[] shaderCode = new byte[stream.Length - start];
             stream.Read(shaderCode, 0, shaderCode.Length);
             Data = shaderCode;
             ShaderTypes = types;
@@ -43,6 +62,16 @@ namespace LightDx
         public static ShaderSource FromStream(Stream stream, ShaderType types)
         {
             return new ShaderSource(stream, types);
+        }
+
+        public static ShaderSource FromResource(string name, ShaderType types)
+        {
+            return FromResource(Assembly.GetEntryAssembly(), name, types);
+        }
+
+        public static ShaderSource FromResource(Assembly assembly, string name, ShaderType types)
+        {
+            return FromStream(assembly.GetManifestResourceStream(assembly.GetName().Name + "." + name), types);
         }
     }
 }
