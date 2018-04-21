@@ -73,6 +73,7 @@
     <Compile Include="ComScopeGuard.cs" />
     <Compile Include="DDSReader.cs" />
     <Compile Include="DepthTest.cs" />
+    <Compile Include="MatrixHelper.cs" />
     <Compile Include="RenderTargetObject.cs" />
     <Compile Include="Vectors.cs" />
     <Compile Include="FrameCounter.cs" />
