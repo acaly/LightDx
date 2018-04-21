@@ -23,9 +23,12 @@ namespace LightDx
         public int UpdateMinTime { get; set; }
         public int UpdateFrame { get; set; }
         private int _count;
+        private long _totalCount;
         private Stopwatch _clock;
         private long _lastTick;
         private long _fpsStartTick;
+
+        public long CountNumber => _totalCount;
 
         public void Start()
         {
@@ -35,6 +38,7 @@ namespace LightDx
         public float NextFrame()
         {
             _count += 1;
+            _totalCount += 1;
             var tick = _clock.ElapsedTicks;
             var ret = (tick - _lastTick) / (float)TimeSpan.TicksPerMillisecond;
             _lastTick = tick;
