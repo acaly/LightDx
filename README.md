@@ -5,6 +5,11 @@ LightDX is a graphics library in C#. It is designed to be used for those who wan
 to use DirectX for accelerated rendering (visualization or a simple game). It supports
 most important funtions in Direct3D, but heavily relys on .NET Framework on other works.
 
+## **Note**
+I'm using new features in C# 7.3, so the code or the nuget package may not work unless
+you use the preview version of Visual Studio. You can find an older version instead. 
+Hopefully C# 7.3 will be published as release version soon.
+
 # Features
 * **Lightweight.**
 No dependencies except the Framework. Less than 100KB after compiled. You can just
