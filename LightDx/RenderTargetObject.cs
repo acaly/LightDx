@@ -11,8 +11,6 @@ namespace LightDx
     internal enum RenderTargetObjectSizeMode
     {
         Equal,
-        Ratio,
-        Fixed,
     }
 
     internal enum RenderTargetObjectType
@@ -44,7 +42,6 @@ namespace LightDx
         //texture target
         private int _format;
         private RenderTargetObjectSizeMode _sizeMode;
-        private float _ratioX, _ratioY;
         private Texture2D _textureObj;
 
         internal static RenderTargetObject CreateSwapchainTarget(LightDevice device)
@@ -172,15 +169,7 @@ namespace LightDx
                 {
                     int texWidth = width;
                     int texHeight = height;
-                    if (_sizeMode == RenderTargetObjectSizeMode.Fixed)
-                    {
-                        throw new NotImplementedException();
-                    }
-                    else if (_sizeMode == RenderTargetObjectSizeMode.Ratio)
-                    {
-                        texWidth = (int)(texWidth * _ratioX);
-                        texHeight = (int)(texHeight * _ratioY);
-                    }
+
                     Texture2DDescription desc = new Texture2DDescription
                     {
                         Width = (uint)texWidth,
