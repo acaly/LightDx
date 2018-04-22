@@ -91,7 +91,7 @@
     <Compile Include="Pipeline.cs" />
     <Compile Include="ConstantBuffer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RenderTarget.cs" />
+    <Compile Include="RenderTargetList.cs" />
     <Compile Include="Samplers.cs" />
     <Compile Include="ShaderSource.cs" />
     <Compile Include="Sprite.cs" />

@@ -8,13 +8,13 @@ using System.Threading.Tasks;
 
 namespace LightDx
 {
-    public sealed class RenderTarget
+    public sealed class RenderTargetList
     {
         private RenderTargetObject[] _renderTargets;
         private IntPtr[] _viewPtr; //The COM objects will be freed by RenderTargetObjects.
         private RenderTargetObject _depthStencil;
 
-        public RenderTarget(params RenderTargetObject[] renderTargetObjects)
+        public RenderTargetList(params RenderTargetObject[] renderTargetObjects)
         {
             if (renderTargetObjects.Length < 1)
             {

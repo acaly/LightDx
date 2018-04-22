@@ -48,7 +48,7 @@ namespace LightDx
         private AutoResetEvent _ctrlResized = new AutoResetEvent(false);
         private AutoResetEvent _ctrlDpiChanged = new AutoResetEvent(false);
 
-        internal RenderTarget CurrentTarget { get; set; }
+        internal RenderTargetList CurrentTarget { get; set; }
         internal Pipeline CurrentPipeline { get; set; }
 
         public bool AutoResize { get; set; } = true;
@@ -313,9 +313,14 @@ namespace LightDx
             return _defaultRenderTarget;
         }
 
-        public RenderTargetObject CreateDefaultDepthStencilTarget()
+        public RenderTargetObject CreateDepthStencilTarget()
         {
             return RenderTargetObject.CreateDepthStencilTarget(this, 20 /*DXGI_FORMAT_D32_FLOAT_S8X24_UINT*/);
+        }
+
+        public RenderTargetObject CreateTextureTarget()
+        {
+            return RenderTargetObject.CreateTextureTarget(this, 87 /*DXGI_FORMAT_B8G8R8A8_UNORM*/);
         }
 
         public Pipeline CompilePipeline(InputTopology topology, params ShaderSource[] shaders)

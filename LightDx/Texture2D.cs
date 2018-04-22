@@ -10,6 +10,7 @@ namespace LightDx
     {
         private readonly LightDevice _device;
 
+        private bool _holdPointer;
         private IntPtr _texture, _view;
         internal IntPtr ViewPtr => _view;
         internal IntPtr TexturePtr => _texture;
@@ -18,10 +19,12 @@ namespace LightDx
 
         private bool _disposed;
 
-        internal Texture2D(LightDevice device, IntPtr tex, IntPtr view, int w, int h)
+        internal Texture2D(LightDevice device, IntPtr tex, IntPtr view, int w, int h, bool holdPtr = true)
         {
             _device = device;
             device.AddComponent(this);
+
+            _holdPointer = holdPtr;
 
             _texture = tex;
             _view = view;
@@ -47,8 +50,15 @@ namespace LightDx
                 return;
             }
 
-            NativeHelper.Dispose(ref _texture);
-            NativeHelper.Dispose(ref _view);
+            if (_holdPointer)
+            {
+                NativeHelper.Dispose(ref _texture);
+                NativeHelper.Dispose(ref _view);
+            }
+            else
+            {
+                _texture = _view = IntPtr.Zero;
+            }
 
             if (disposing)
             {
@@ -57,6 +67,18 @@ namespace LightDx
 
             _disposed = true;
             GC.SuppressFinalize(this);
+        }
+
+        internal void UpdatePointer(int w, int h, IntPtr tex, IntPtr view)
+        {
+            if (_holdPointer)
+            {
+                throw new InvalidOperationException();
+            }
+            Width = w;
+            Height = h;
+            _texture = tex;
+            _view = view;
         }
     }
 }

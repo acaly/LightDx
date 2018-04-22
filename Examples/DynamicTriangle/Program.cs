@@ -46,7 +46,7 @@ namespace DynamicTriangle
 
             using (var device = LightDevice.Create(form))
             {
-                var target = new RenderTarget(device.GetDefaultTarget());
+                var target = new RenderTargetList(device.GetDefaultTarget());
                 target.Apply();
 
                 Pipeline pipeline = device.CompilePipeline(InputTopology.Triangle,

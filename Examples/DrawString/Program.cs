@@ -26,7 +26,7 @@ namespace DrawString
                 var targetObj = device.GetDefaultTarget();
                 targetObj.ClearColor = Color.White.WithAlpha(1);
 
-                var target = new RenderTarget(targetObj);
+                var target = new RenderTargetList(targetObj);
                 target.Apply();
 
                 var sprite = new Sprite(device);

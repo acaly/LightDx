@@ -28,10 +28,12 @@ namespace LightDx
 
         private RenderTargetObjectType _type;
         private bool _isDepthStencil;
-        private IntPtr _viewPtr;
+        private IntPtr _TexturePtr;
+        private IntPtr _viewPtrTarget;
+        private IntPtr _viewPtrResource;
 
         internal RenderTargetObjectType TargetType => _type;
-        internal IntPtr ViewPtr => _viewPtr;
+        internal IntPtr ViewPtr => _viewPtrTarget;
         internal bool IsDepthStencil => _isDepthStencil;
 
         internal LightDevice Device => _device;
@@ -41,8 +43,9 @@ namespace LightDx
 
         //texture target
         private int _format;
-        private float _ratioX, _ratioY;
         private RenderTargetObjectSizeMode _sizeMode;
+        private float _ratioX, _ratioY;
+        private Texture2D _textureObj;
 
         internal static RenderTargetObject CreateSwapchainTarget(LightDevice device)
         {
@@ -60,6 +63,18 @@ namespace LightDx
             ret._isDepthStencil = true;
             ret._format = format;
             ret._sizeMode = RenderTargetObjectSizeMode.Equal;
+            ret.RebuildView();
+            return ret;
+        }
+
+        internal static RenderTargetObject CreateTextureTarget(LightDevice device, int format)
+        {
+            var ret = new RenderTargetObject(device);
+            ret._type = RenderTargetObjectType.TextureTarget;
+            ret._isDepthStencil = false;
+            ret._format = format;
+            ret._sizeMode = RenderTargetObjectSizeMode.Equal;
+            ret._textureObj = new Texture2D(device, IntPtr.Zero, IntPtr.Zero, 0, 0, false);
             ret.RebuildView();
             return ret;
         }
@@ -88,7 +103,9 @@ namespace LightDx
             {
                 return;
             }
-            NativeHelper.Dispose(ref _viewPtr);
+            NativeHelper.Dispose(ref _TexturePtr);
+            NativeHelper.Dispose(ref _viewPtrTarget);
+            NativeHelper.Dispose(ref _viewPtrResource);
 
             if (disposing)
             {
@@ -104,14 +121,20 @@ namespace LightDx
 
         internal void ReleaseView()
         {
-            NativeHelper.Dispose(ref _viewPtr);
+            if (_textureObj != null)
+            {
+                _textureObj.UpdatePointer(0, 0, IntPtr.Zero, IntPtr.Zero);
+            }
+            NativeHelper.Dispose(ref _TexturePtr);
+            NativeHelper.Dispose(ref _viewPtrTarget);
+            NativeHelper.Dispose(ref _viewPtrResource);
         }
 
         internal void RebuildView()
         {
             if (_type == RenderTargetObjectType.SwapchainTarget)
             {
-                _viewPtr = _device.DefaultRenderView.AddRef();
+                _viewPtrTarget = _device.DefaultRenderView.AddRef();
             }
             else
             {
@@ -120,6 +143,10 @@ namespace LightDx
 
                 if (_isDepthStencil)
                 {
+                    if (_sizeMode != RenderTargetObjectSizeMode.Equal)
+                    {
+                        throw new InvalidOperationException();
+                    }
                     Texture2DDescription desc = new Texture2DDescription
                     {
                         Width = (uint)width,
@@ -134,16 +161,50 @@ namespace LightDx
                         CPUAccessFlags = 0,
                         MiscFlags = 0,
                     };
-                    using (ComScopeGuard depthTex = new ComScopeGuard(), depthView = new ComScopeGuard())
+                    using (var depthTex = new ComScopeGuard())
                     {
                         Natives.Device.CreateTexture2D(_device.DevicePtr, ref desc, IntPtr.Zero, out depthTex.Ptr).Check();
-                        Natives.Device.CreateDepthStencilView(_device.DevicePtr, depthTex.Ptr, IntPtr.Zero, out depthView.Ptr).Check();
-                        _viewPtr = depthView.Move();
+                        Natives.Device.CreateDepthStencilView(_device.DevicePtr, depthTex.Ptr, IntPtr.Zero, out _viewPtrTarget).Check();
+                        _TexturePtr = depthTex.Move();
                     }
                 }
                 else
                 {
-                    throw new NotImplementedException();
+                    int texWidth = width;
+                    int texHeight = height;
+                    if (_sizeMode == RenderTargetObjectSizeMode.Fixed)
+                    {
+                        throw new NotImplementedException();
+                    }
+                    else if (_sizeMode == RenderTargetObjectSizeMode.Ratio)
+                    {
+                        texWidth = (int)(texWidth * _ratioX);
+                        texHeight = (int)(texHeight * _ratioY);
+                    }
+                    Texture2DDescription desc = new Texture2DDescription
+                    {
+                        Width = (uint)texWidth,
+                        Height = (uint)texHeight,
+                        MipLevels = 1,
+                        ArraySize = 1,
+                        Format = (uint)_format,
+                        SampleCount = 1,
+                        SampleQuality = 0,
+                        Usage = 0, //Default
+                        BindFlags = 0x28, //RenderTarget+ShaderResource
+                        CPUAccessFlags = 0,
+                        MiscFlags = 0,
+                    };
+                    using (ComScopeGuard tex = new ComScopeGuard(), targetView = new ComScopeGuard(), resView = new ComScopeGuard())
+                    {
+                        Natives.Device.CreateTexture2D(_device.DevicePtr, ref desc, IntPtr.Zero, out tex.Ptr).Check();
+                        Natives.Device.CreateRenderTargetView(_device.DevicePtr, tex.Ptr, IntPtr.Zero, out targetView.Ptr).Check();
+                        Natives.Device.CreateShaderResourceView(_device.DevicePtr, tex.Ptr, IntPtr.Zero, out resView.Ptr).Check();
+                        _TexturePtr = tex.Move();
+                        _viewPtrTarget = targetView.Move();
+                        _viewPtrResource = resView.Move();
+                    }
+                    _textureObj.UpdatePointer(texWidth, texHeight, _TexturePtr, _viewPtrResource);
                 }
             }
         }
@@ -152,13 +213,22 @@ namespace LightDx
         {
             if (_isDepthStencil)
             {
-                DeviceContext.ClearDepthStencilView(_device.ContextPtr, _viewPtr, 1, 1.0f, 0);
+                DeviceContext.ClearDepthStencilView(_device.ContextPtr, _viewPtrTarget, 1, 1.0f, 0);
             }
             else
             {
                 Vector4 color = ClearColor;
-                DeviceContext.ClearRenderTargetView(_device.ContextPtr, _viewPtr, ref color);
+                DeviceContext.ClearRenderTargetView(_device.ContextPtr, _viewPtrTarget, ref color);
             }
+        }
+
+        public Texture2D GetTexture2D()
+        {
+            if (_type != RenderTargetObjectType.TextureTarget || _isDepthStencil)
+            {
+                throw new InvalidOperationException();
+            }
+            return _textureObj;
         }
     }
 }
