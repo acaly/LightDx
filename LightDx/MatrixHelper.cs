@@ -9,6 +9,11 @@ namespace LightDx
 {
     public static class MatrixHelper
     {
+        public static Matrix4x4 Transpose(this Matrix4x4 matrix)
+        {
+            return Matrix4x4.Transpose(matrix);
+        }
+
         public static Matrix4x4 CreatePerspectiveFieldOfView(float fov, float aspectRatio, float nearPlane = 0.1f, float farPlane = 1000f)
         {
             var yScale = 1 / (float)Math.Tan(fov / 2);

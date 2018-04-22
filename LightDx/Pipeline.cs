@@ -44,6 +44,8 @@ namespace LightDx
 
         private bool _isBound;
 
+        public bool IsActive => _isBound;
+
         internal Pipeline(LightDevice device, IntPtr v, IntPtr g, IntPtr p, IntPtr sign, InputTopology topology)
         {
             _device = device;

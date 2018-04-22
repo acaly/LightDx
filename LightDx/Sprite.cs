@@ -99,20 +99,34 @@ namespace LightDx
             _pipeline.Apply();
         }
 
+        private void CheckPipeline()
+        {
+            if (!_pipeline.IsActive)
+            {
+                throw new InvalidOperationException();
+            }
+        }
+
         public void DrawTexture(Texture2D tex, int x, int y, int w, int h)
         {
-            DrawTexture(tex, x, y, w, h, 0, 0, tex.Width, tex.Height, 0, 0, 0);
+            CheckPipeline();
+            DrawTextureInternal(tex, x, y, w, h, 0, 0, tex.Width, tex.Height, 0, 0, 0);
         }
 
         public void DrawTexture(Texture2D tex, float x, float y, float w, float h, int tx, int ty, int tw, int th)
         {
-            DrawTexture(tex, x, y, w, h, tx, ty, tw, th, 0, 0, 0);
+            CheckPipeline();
+            DrawTextureInternal(tex, x, y, w, h, tx, ty, tw, th, 0, 0, 0);
         }
 
         public void DrawTexture(Texture2D tex, float x, float y, float w, float h, int tx, int ty, int tw, int th, float cx, float cy, float rotate)
         {
-            //var r = x + w;
-            //var b = y + h;
+            CheckPipeline();
+            DrawTextureInternal(tex, x, y, w, h, tx, ty, tw, th, cx, cy, rotate);
+        }
+
+        private void DrawTextureInternal(Texture2D tex, float x, float y, float w, float h, int tx, int ty, int tw, int th, float cx, float cy, float rotate)
+        {
             var fx = tx / (float)tex.Width;
             var fy = ty / (float)tex.Height;
             var fr = (tx + w) / (float)tex.Width;
@@ -147,6 +161,7 @@ namespace LightDx
 
         public void DrawString(TextureFontCache font, string str, float x, float y, float maxWidth)
         {
+            CheckPipeline();
             font.CacheString(str);
             var drawX = x;
             var maxX = x + maxWidth;
@@ -175,7 +190,7 @@ namespace LightDx
             if (b.Bitmap != null)
             {
                 //Non-space character
-                DrawTexture(b.Bitmap, x, y, b.Width, b.Height, b.X, b.Y, b.Width, b.Height);
+                DrawTextureInternal(b.Bitmap, x, y, b.Width, b.Height, b.X, b.Y, b.Width, b.Height, 0, 0, 0);
             }
             return x + ax;
         }
