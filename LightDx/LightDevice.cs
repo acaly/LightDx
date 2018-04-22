@@ -188,6 +188,14 @@ namespace LightDx
             uint adapterId = AdapterDeviceId;
             IntPtr ret = IntPtr.Zero;
             foreach (var i in GetAdapterDescription(d => d.DeviceId == adapterId, d => ret = d)) { }
+            if (ret == IntPtr.Zero)
+            {
+                using (var factory = new ComScopeGuard())
+                {
+                    Native.CreateDXGIFactory(Guids.Factory, out factory.Ptr).Check();
+                    Factory.EnumAdapters(factory.Ptr, 0, out ret).Check();
+                }
+            }
             return ret;
         }
 
