@@ -22,12 +22,12 @@ Focus on Direct3D. Use the .NET Framework as much as possible: Bitmap format
 conversion, font rendering, mouse and keyboard input, vector and matrix math.
 Fortunately the .NET Framework API is well designed and can be directly used here,
 which avoids tons of work.
-* **Simplified API.**
+* **Easy to use.**
 Unlike SharpDX or SlimDX, LightDX is not a DirectX binding. Therefore it hides
 the complicated details of creating each components and only provides simplified
 API, which makes it much easier to use. This may have some limits, but hopefully 
 LightDX will provide everything you really need.
-* **Effective.**
+* **Fast.**
 LightDX utilizes calli instruction to call native COM methods, as
 SharpDX does. This should be the fastest method. Other parts are also written with
 efficiency in mind (at least to my best).
@@ -43,11 +43,15 @@ Limitations in current implementation (may be fixed in the future):
 slower at startup and takes more memory compared with precompiled, which, however,
 requires special build tool and makes building the project complicated.
 
+... and many other not supported features in DX11...
+
 # How to use
 Nuget package ```LightDx``` is available now. (Only .NET Framework 4.7 is supported.)
 
-See projects in the [Examples](Examples) folder and
-[ImGuiOnLightDx](https://github.com/acaly/ImGuiOnLightDx) for example.
+The following resource may be useful:
+* [Examples](Examples) folder.
+* [DirectX 11 Tutorial](https://github.com/acaly/LightDx.DirectX11Tutorials).
+* [ImGuiOnLightDx](https://github.com/acaly/ImGuiOnLightDx).
 
 # TODO List
 More pipeline units:
@@ -55,9 +59,10 @@ More pipeline units:
 * Rasterizer.
 
 Others:
-* Better support for pixel formats.
-* Loading DDS.
+* Render to texture.
 * Compile the methods with calli at compile time using Fody.
+* Minimal stencil support (low priority).
+* Better support for pixel formats (low priority).
 
-If you have another function that LightDx cannot do and is not in the list above, feel
-free to open an issue!
+If you want to use features that LightDx does not support yet and is not in the list
+above, feel free to open an issue!
