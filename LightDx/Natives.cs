@@ -8,6 +8,19 @@ using System.Threading.Tasks;
 
 namespace LightDx.Natives
 {
+    internal unsafe struct DXGIAdapterDescription
+    {
+        public fixed char Description[128];
+        public uint VendorId;
+        public uint DeviceId;
+        public uint SubSysId;
+        public uint Revision;
+        public UIntPtr DedicatedVideoMemory;
+        public UIntPtr DedicatedSystemMemory;
+        public UIntPtr SharedSystemMemory;
+        public ulong AdapterLuid;
+    }
+
     internal struct SwapChainDescription
     {
         //DXGI_MODE_DESC BufferDesc;
@@ -142,7 +155,7 @@ namespace LightDx.Natives
     
     internal class Native
     {
-        [DllImport("d3d11.dll", CallingConvention = CallingConvention.StdCall)]
+        [DllImport("d3d11.dll")]
         public static extern uint D3D11CreateDeviceAndSwapChain(
             IntPtr pAdapter, //null
             uint DriverType, //hardware(1)
@@ -157,7 +170,7 @@ namespace LightDx.Natives
             out uint pFeatureLevel,
             out IntPtr ppImmediateContext);
 
-        [DllImport("d3dcompiler_47.dll", CallingConvention = CallingConvention.StdCall)]
+        [DllImport("d3dcompiler_47.dll")]
         public unsafe static extern uint D3DCompile(
             void* pSrcData,
             int SrcDataSize,
@@ -171,8 +184,11 @@ namespace LightDx.Natives
             out IntPtr ppCode,
             out IntPtr ppErrorMsgs);
 
-        [DllImport("d3dcompiler_47.dll", CallingConvention = CallingConvention.StdCall)]
+        [DllImport("d3dcompiler_47.dll")]
         public static extern int D3DGetInputSignatureBlob(IntPtr d, IntPtr len, out IntPtr r);
+
+        [DllImport("DXGI.dll")]
+        public static extern uint CreateDXGIFactory(IntPtr guid, out IntPtr r);
     }
 
     internal static class Device
@@ -234,11 +250,6 @@ namespace LightDx.Natives
             int i, int j);
         public static readonly PresentDelegate Present =
             CalliGenerator.GetCalliDelegate<PresentDelegate>(8);
-        
-        public delegate uint GetParentDelegate(IntPtr @this,
-            IntPtr guid, out IntPtr r);
-        public static readonly GetParentDelegate GetParent =
-            CalliGenerator.GetCalliDelegate<GetParentDelegate>(6);
 
         public delegate uint ResizeBuffersDelegate(IntPtr @this,
             uint count, uint width, uint height, uint format, uint flags);
@@ -248,18 +259,22 @@ namespace LightDx.Natives
 
     internal static class Factory
     {
-        public delegate uint GetAdapterDelegate(IntPtr @this,
+        public delegate uint EnumAdaptersDelegate(IntPtr @this,
             uint index, out IntPtr r);
-        public static readonly GetAdapterDelegate GetAdapter =
-            CalliGenerator.GetCalliDelegate<GetAdapterDelegate>(7);
+        public static readonly EnumAdaptersDelegate EnumAdapters =
+            CalliGenerator.GetCalliDelegate<EnumAdaptersDelegate>(7);
+        
     }
 
     internal static class Adapter
     {
-        public delegate uint GetOutputDelegate(IntPtr @this,
+        public delegate uint EnumOutputsDelegate(IntPtr @this,
             uint index, out IntPtr r);
-        public static readonly GetOutputDelegate GetOutput =
-            CalliGenerator.GetCalliDelegate<GetOutputDelegate>(7);
+        public static readonly EnumOutputsDelegate EnumOutputs =
+            CalliGenerator.GetCalliDelegate<EnumOutputsDelegate>(7);
+
+        public unsafe delegate uint GetDescDelegate(IntPtr @this, void* desc);
+        public static GetDescDelegate GetDesc = CalliGenerator.GetCalliDelegate<GetDescDelegate>(8);
     }
 
     internal static class Output

@@ -20,6 +20,8 @@ namespace LightDx
             public volatile bool Stop;
         }
 
+        public static uint AdapterDeviceId { get; set; }
+
         private bool _disposing;
         private bool _disposed;
 
@@ -57,9 +59,10 @@ namespace LightDx
 
         static LightDevice()
         {
+            SetupDefaltAdapter();
             TestGetDpiForMonitor();
         }
-        
+
         private LightDevice()
         {
         }
@@ -76,7 +79,7 @@ namespace LightDx
                 return;
             }
             _disposing = true;
-            
+
             if (disposing)
             {
                 RemoveEventHandlers();
@@ -129,6 +132,65 @@ namespace LightDx
             }
         }
 
+        private static unsafe bool GetAdapterDesc(IntPtr adapter, out DXGIAdapterDescription desc)
+        {
+            fixed (DXGIAdapterDescription* ptr = &desc)
+            {
+                return Adapter.GetDesc(adapter, ptr) == 0;
+            }
+        }
+
+        private static IEnumerable<DXGIAdapterDescription> GetAdapterDescription(Predicate<DXGIAdapterDescription> predicate, Action<IntPtr> result)
+        {
+            uint code;
+            using (var factory = new ComScopeGuard())
+            {
+                Native.CreateDXGIFactory(Guids.Factory, out factory.Ptr).Check();
+
+                uint i = 0;
+                do
+                {
+                    using (var adapter = new ComScopeGuard())
+                    {
+                        code = Factory.EnumAdapters(factory.Ptr, i++, out adapter.Ptr);
+                        if (code == 0)
+                        {
+                            if (GetAdapterDesc(adapter.Ptr, out var desc))
+                            {
+                                yield return desc;
+                                if (predicate != null && predicate(desc))
+                                {
+                                    result.Invoke(adapter.Move());
+                                    yield break;
+                                }
+                            }
+                        }
+                    }
+                } while (code != 0x887A0002u);
+            }
+        }
+
+        public static unsafe Tuple<uint, string>[] GetAllAdapters()
+        {
+            return GetAdapterDescription(null, null)
+                .Select(d => new Tuple<uint, string>(d.DeviceId,
+                Encoding.Unicode.GetString((byte*)d.Description, 128 * 2).Trim('\0'))).ToArray();
+        }
+
+        private static void SetupDefaltAdapter()
+        {
+            var list = GetAdapterDescription(null, null).OrderByDescending(x => x.DedicatedVideoMemory.ToUInt64());
+            AdapterDeviceId = list.First().DeviceId;
+        }
+
+        private static IntPtr GetAdapter()
+        {
+            uint adapterId = AdapterDeviceId;
+            IntPtr ret = IntPtr.Zero;
+            foreach (var i in GetAdapterDescription(d => d.DeviceId == adapterId, d => ret = d)) { }
+            return ret;
+        }
+
         public static LightDevice Create(Control ctrl, int initWidth = -1, int initHeight = -1)
         {
             var ret = new LightDevice();
@@ -147,44 +209,46 @@ namespace LightDx
 
             try
             {
-                //create core objects
-                IntPtr swapChain, device, immediateContext;
+                using (var adapter = new ComScopeGuard())
                 {
-                    var d = new SwapChainDescription(ctrl.Handle, ret._width, ret._height);
-                    
-                    Native.D3D11CreateDeviceAndSwapChain(
-                        IntPtr.Zero, 1, IntPtr.Zero, 0, IntPtr.Zero, 0, 7, ref d,
-                        out swapChain, out device, out var featureLevel, out immediateContext).Check();
+                    //Find the adapter
+                    adapter.Ptr = GetAdapter();
 
-                    ret._device = device;
-                    ret._swapchain = swapChain;
-                    ret._context = immediateContext;
-                }
-
-                //get default render target
-                IntPtr renderView;
-                {
-                    using (var backBuffer = new ComScopeGuard())
+                    //create core objects
+                    IntPtr swapChain, device, immediateContext;
                     {
-                        SwapChain.GetBuffer(swapChain, 0, Guids.Texture2D, out backBuffer.Ptr).Check();
-                        Device.CreateRenderTargetView(device, backBuffer.Ptr, IntPtr.Zero, out renderView).Check();
+                        var d = new SwapChainDescription(ctrl.Handle, ret._width, ret._height);
+
+                        Native.D3D11CreateDeviceAndSwapChain(
+                            adapter.Ptr, adapter.Ptr == IntPtr.Zero ? 1u : 0u,
+                            IntPtr.Zero, 0, IntPtr.Zero, 0, 7, ref d,
+                            out swapChain, out device, out var featureLevel, out immediateContext).Check();
+
+                        ret._device = device;
+                        ret._swapchain = swapChain;
+                        ret._context = immediateContext;
                     }
-                    ret._defaultRenderView = renderView;
+
+                    //get default render target
+                    IntPtr renderView;
+                    {
+                        using (var backBuffer = new ComScopeGuard())
+                        {
+                            SwapChain.GetBuffer(swapChain, 0, Guids.Texture2D, out backBuffer.Ptr).Check();
+                            Device.CreateRenderTargetView(device, backBuffer.Ptr, IntPtr.Zero, out renderView).Check();
+                        }
+                        ret._defaultRenderView = renderView;
+                    }
+
+                    //get DXGI.Output
+                    {
+                        Adapter.EnumOutputs(adapter.Ptr, 0, out var output).Check();
+                        ret._output = output;
+                    }
+
+                    ret._defaultRenderTarget = RenderTargetObject.CreateSwapchainTarget(ret);
+                    ret.AddEventHandlers();
                 }
-
-                //get DXGI.Output
-                using (ComScopeGuard factory = new ComScopeGuard(),
-                    adapter = new ComScopeGuard(), output = new ComScopeGuard())
-                {
-                    SwapChain.GetParent(swapChain, Guids.Factory, out factory.Ptr).Check();
-                    Factory.GetAdapter(factory.Ptr, 0, out adapter.Ptr).Check();
-                    Adapter.GetOutput(adapter.Ptr, 0, out output.Ptr).Check();
-
-                    ret._output = output.Move();
-                }
-
-                ret._defaultRenderTarget = RenderTargetObject.CreateSwapchainTarget(ret);
-                ret.AddEventHandlers();
             }
             catch (NativeException e)
             {
