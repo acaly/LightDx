@@ -6,9 +6,12 @@ to use DirectX for accelerated rendering (visualization or a simple game). It su
 most important funtions in Direct3D, but heavily relys on .NET Framework on other works.
 
 ## **Note**
+This is a work in progress, so public APIs are expected to have breaking changes.
+
 I'm using new features in C# 7.3, so the code or the nuget package may not work unless
-you use the preview version of Visual Studio. You can find an older version instead. 
-Hopefully C# 7.3 will be published as release version soon.
+you use Visual Studio 2017 Preview. If you don't want to install another VS, you can
+find an older version of code or binary instead. Hopefully C# 7.3 will be published as
+release version soon.
 
 # Features
 * **Lightweight.**
@@ -39,16 +42,13 @@ Limitations in design:
 
 Limitations in current implementation (may be fixed in the future):
 * Only support Texture2D as ShaderResource.
-* Functions containing calli instructions are generated when loading. This makes it
-slower at startup and takes more memory compared with precompiled, which, however,
-requires special build tool and makes building the project complicated.
 
 ... and many other not supported features in DX11...
 
 # How to use
 Nuget package ```LightDx``` is available now. (Only .NET Framework 4.7 is supported.)
 
-The following resource may be useful:
+Please check the following projects that uses LightDx:
 * [Examples](Examples) folder.
 * [DirectX 11 Tutorial](https://github.com/acaly/LightDx.DirectX11Tutorials).
 * [ImGuiOnLightDx](https://github.com/acaly/ImGuiOnLightDx).
@@ -59,10 +59,8 @@ More pipeline units:
 * Rasterizer.
 
 Others:
-* Render to texture.
-* Compile the methods with calli at compile time using Fody.
 * Minimal stencil support (low priority).
 * Better support for pixel formats (low priority).
 
-If you want to use features that LightDx does not support yet and is not in the list
-above, feel free to open an issue!
+If you want to use features that LightDx does not support yet, feel free to tell
+me by opening an issue!
