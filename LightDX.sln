@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 15.0.27428.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LightDx", "LightDx\LightDx.csproj", "{45B0C93A-0AAF-41E3-BF58-61F42EF2C256}"
+	ProjectSection(ProjectDependencies) = postProject
+		{5E830BD9-174D-49A2-8F79-4F193711D42A} = {5E830BD9-174D-49A2-8F79-4F193711D42A}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Triangle", "Examples\Triangle\Triangle.csproj", "{B35FE686-B955-4C7A-AA7F-BA1FF5185674}"
 EndProject
@@ -14,6 +17,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DrawString", "Examples\DrawString\DrawString.csproj", "{FE9BD09A-74E5-4ED8-BD61-1A9F128E5DA0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DynamicTriangle", "Examples\DynamicTriangle\DynamicTriangle.csproj", "{D0E73992-784B-4F38-9198-4E08A7BAF8AE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Weavers", "Weavers\Weavers.csproj", "{5E830BD9-174D-49A2-8F79-4F193711D42A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -63,6 +68,14 @@ Global
 		{D0E73992-784B-4F38-9198-4E08A7BAF8AE}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D0E73992-784B-4F38-9198-4E08A7BAF8AE}.Release|x64.ActiveCfg = Release|x64
 		{D0E73992-784B-4F38-9198-4E08A7BAF8AE}.Release|x64.Build.0 = Release|x64
+		{5E830BD9-174D-49A2-8F79-4F193711D42A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E830BD9-174D-49A2-8F79-4F193711D42A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5E830BD9-174D-49A2-8F79-4F193711D42A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{5E830BD9-174D-49A2-8F79-4F193711D42A}.Debug|x64.Build.0 = Debug|Any CPU
+		{5E830BD9-174D-49A2-8F79-4F193711D42A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5E830BD9-174D-49A2-8F79-4F193711D42A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5E830BD9-174D-49A2-8F79-4F193711D42A}.Release|x64.ActiveCfg = Release|Any CPU
+		{5E830BD9-174D-49A2-8F79-4F193711D42A}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

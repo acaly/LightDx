@@ -705,10 +705,13 @@ namespace LightDx
 
         private static int GetDpiForWindow(IntPtr hWnd)
         {
-            var monitor = MonitorFromWindow(hWnd, 2 /*MONITOR_DEFAULTTONEAREST*/) ;
-            if (GetDpiForMonitor(monitor, 0 /*MDT_EFFECTIVE_DPI*/, out var x, out var y) == 0)
+            if (s_GetDpiForMonitorSupported)
             {
-                return (int)x;
+                var monitor = MonitorFromWindow(hWnd, 2 /*MONITOR_DEFAULTTONEAREST*/);
+                if (GetDpiForMonitor(monitor, 0 /*MDT_EFFECTIVE_DPI*/, out var x, out var y) == 0)
+                {
+                    return (int)x;
+                }
             }
             return 96; //Use default if failed
         }
