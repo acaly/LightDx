@@ -158,12 +158,7 @@ namespace LightDx
                         CPUAccessFlags = 0,
                         MiscFlags = 0,
                     };
-                    using (var depthTex = new ComScopeGuard())
-                    {
-                        Natives.Device.CreateTexture2D(_device.DevicePtr, ref desc, IntPtr.Zero, out depthTex.Ptr).Check();
-                        Natives.Device.CreateDepthStencilView(_device.DevicePtr, depthTex.Ptr, IntPtr.Zero, out _viewPtrTarget).Check();
-                        _TexturePtr = depthTex.Move();
-                    }
+                    RebuildViewStencilInternal(ref desc);
                 }
                 else
                 {
@@ -184,17 +179,35 @@ namespace LightDx
                         CPUAccessFlags = 0,
                         MiscFlags = 0,
                     };
-                    using (ComScopeGuard tex = new ComScopeGuard(), targetView = new ComScopeGuard(), resView = new ComScopeGuard())
-                    {
-                        Natives.Device.CreateTexture2D(_device.DevicePtr, ref desc, IntPtr.Zero, out tex.Ptr).Check();
-                        Natives.Device.CreateRenderTargetView(_device.DevicePtr, tex.Ptr, IntPtr.Zero, out targetView.Ptr).Check();
-                        Natives.Device.CreateShaderResourceView(_device.DevicePtr, tex.Ptr, IntPtr.Zero, out resView.Ptr).Check();
-                        _TexturePtr = tex.Move();
-                        _viewPtrTarget = targetView.Move();
-                        _viewPtrResource = resView.Move();
-                    }
+                    RebuildViewTextureInternal(ref desc);
                     _textureObj.UpdatePointer(texWidth, texHeight, _TexturePtr, _viewPtrResource);
                 }
+            }
+        }
+
+        //Note: The following 2 methods are separated from RebuildView to avoid fat method to be modified by Mono,
+        //which when doing so will corrupt the binary for unknown reason.
+
+        private void RebuildViewStencilInternal(ref Texture2DDescription desc)
+        {
+            using (var depthTex = new ComScopeGuard())
+            {
+                Natives.Device.CreateTexture2D(_device.DevicePtr, ref desc, IntPtr.Zero, out depthTex.Ptr).Check();
+                Natives.Device.CreateDepthStencilView(_device.DevicePtr, depthTex.Ptr, IntPtr.Zero, out _viewPtrTarget).Check();
+                _TexturePtr = depthTex.Move();
+            }
+        }
+
+        private void RebuildViewTextureInternal(ref Texture2DDescription desc)
+        {
+            using (ComScopeGuard tex = new ComScopeGuard(), targetView = new ComScopeGuard(), resView = new ComScopeGuard())
+            {
+                Natives.Device.CreateTexture2D(_device.DevicePtr, ref desc, IntPtr.Zero, out tex.Ptr).Check();
+                Natives.Device.CreateRenderTargetView(_device.DevicePtr, tex.Ptr, IntPtr.Zero, out targetView.Ptr).Check();
+                Natives.Device.CreateShaderResourceView(_device.DevicePtr, tex.Ptr, IntPtr.Zero, out resView.Ptr).Check();
+                _TexturePtr = tex.Move();
+                _viewPtrTarget = targetView.Move();
+                _viewPtrResource = resView.Move();
             }
         }
 
