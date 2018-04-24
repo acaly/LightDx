@@ -8,10 +8,11 @@ most important funtions in Direct3D, but heavily relys on .NET Framework on othe
 ## **Note**
 This is a work in progress, so public APIs are expected to have breaking changes.
 
-I'm using new features in C# 7.3, so the code or the nuget package may not work unless
+~~I'm using new features in C# 7.3, so the code or the nuget package may not work unless
 you use Visual Studio 2017 Preview. If you don't want to install another VS, you can
 find an older version of code or binary instead. Hopefully C# 7.3 will be published as
-release version soon.
+release version soon.~~ Now you can use the nuget package (since 0.1.6) under standard VS 2017 thanks
+to the fody weaver. The source code however still only works in VS preview.
 
 # Features
 * **Lightweight.**
