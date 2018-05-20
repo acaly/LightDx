@@ -199,7 +199,7 @@ namespace LightDx
             return ret;
         }
 
-        public static LightDevice Create(Control ctrl, int initWidth = -1, int initHeight = -1)
+        public unsafe static LightDevice Create(Control ctrl, int initWidth = -1, int initHeight = -1)
         {
             var ret = new LightDevice();
 
@@ -243,7 +243,7 @@ namespace LightDx
                         using (var backBuffer = new ComScopeGuard())
                         {
                             SwapChain.GetBuffer(swapChain, 0, Guids.Texture2D, out backBuffer.Ptr).Check();
-                            Device.CreateRenderTargetView(device, backBuffer.Ptr, IntPtr.Zero, out renderView).Check();
+                            Device.CreateRenderTargetView(device, backBuffer.Ptr, null, out renderView).Check();
                         }
                         ret._defaultRenderView = renderView;
                     }
@@ -289,14 +289,7 @@ namespace LightDx
             SwapChain.ResizeBuffers(_swapchain, 1, (uint)width, (uint)height, 28 /*R8G8B8A8_UNorm*/, 0).Check();
 
             //Get the new back buffer and create default view
-            {
-                using (ComScopeGuard backBuffer = new ComScopeGuard(), renderView = new ComScopeGuard())
-                {
-                    SwapChain.GetBuffer(_swapchain, 0, Guids.Texture2D, out backBuffer.Ptr).Check();
-                    Device.CreateRenderTargetView(_device, backBuffer.Ptr, IntPtr.Zero, out renderView.Ptr).Check();
-                    _defaultRenderView = renderView.Move();
-                }
-            }
+            RebuildBackBuffer();
 
             //Rebuild all target objects
             RebuildRenderTargets?.Invoke();
@@ -308,14 +301,42 @@ namespace LightDx
             ResolutionChanged?.Invoke(this, EventArgs.Empty);
         }
 
+        //Separate to avoid fat method body (workaround for the Mono.Cecil bug)
+        private unsafe void RebuildBackBuffer()
+        {
+            using (ComScopeGuard backBuffer = new ComScopeGuard(), renderView = new ComScopeGuard())
+            {
+                SwapChain.GetBuffer(_swapchain, 0, Guids.Texture2D, out backBuffer.Ptr).Check();
+                Device.CreateRenderTargetView(_device, backBuffer.Ptr, null, out renderView.Ptr).Check();
+                _defaultRenderView = renderView.Move();
+            }
+        }
+
         public RenderTargetObject GetDefaultTarget()
         {
             return _defaultRenderTarget;
         }
 
-        public RenderTargetObject CreateDepthStencilTarget()
+        public RenderTargetObject CreateDepthStencilTarget(int depthSize = 24, int stencilSize = 8)
         {
-            return RenderTargetObject.CreateDepthStencilTarget(this, 20 /*DXGI_FORMAT_D32_FLOAT_S8X24_UINT*/);
+            if (depthSize == 24 && stencilSize == 8)
+            {
+                return RenderTargetObject.CreateDepthStencilTarget(this,
+                    44 /* DXGI_FORMAT_R24G8_TYPELESS */,
+                    45 /* DXGI_FORMAT_D24_UNORM_S8_UINT */,
+                    46 /* DXGI_FORMAT_R24_UNORM_X8_TYPELESS */);
+            }
+            else if (depthSize == 32 && stencilSize == 0)
+            {
+                return RenderTargetObject.CreateDepthStencilTarget(this,
+                    39 /* DXGI_FORMAT_R32_TYPELESS */,
+                    40 /* DXGI_FORMAT_D32_FLOAT */,
+                    41 /* DXGI_FORMAT_R32_FLOAT */);
+            }
+            else
+            {
+                throw new ArgumentOutOfRangeException();
+            }
         }
 
         public RenderTargetObject CreateTextureTarget()
@@ -447,12 +468,12 @@ namespace LightDx
             }
         }
 
-        public Texture2D CreateTexture2D(int width, int height, int format, IntPtr data, int stride, bool isDynamic)
+        public unsafe Texture2D CreateTexture2D(int width, int height, int format, IntPtr data, int stride, bool isDynamic)
         {
             using (ComScopeGuard tex = new ComScopeGuard(), view = new ComScopeGuard())
             {
                 tex.Ptr = InternalCreateTexture2D(width, height, format, data, stride, isDynamic);
-                Device.CreateShaderResourceView(_device, tex.Ptr, IntPtr.Zero, out view.Ptr).Check();
+                Device.CreateShaderResourceView(_device, tex.Ptr, null, out view.Ptr).Check();
                 return new Texture2D(this, tex.Move(), view.Move(), width, height);
             }
         }

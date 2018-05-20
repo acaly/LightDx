@@ -193,8 +193,8 @@ namespace LightDx.Natives
 
     internal static class Device
     {
-        public delegate uint CreateRenderTargetViewDelegate(IntPtr @this,
-            IntPtr pResource, IntPtr desc, out IntPtr r);
+        public unsafe delegate uint CreateRenderTargetViewDelegate(IntPtr @this,
+            IntPtr pResource, int* desc, out IntPtr r);
         public static readonly CreateRenderTargetViewDelegate CreateRenderTargetView =
             CalliGenerator.GetCalliDelegate<CreateRenderTargetViewDelegate>(9);
         
@@ -223,13 +223,13 @@ namespace LightDx.Natives
         public static readonly CreateTexture2DDelegate CreateTexture2D =
             CalliGenerator.GetCalliDelegate<CreateTexture2DDelegate>(5);
         
-        public delegate uint CreateShaderResourceViewDelegate(IntPtr @this,
-            IntPtr resource, IntPtr desc, out IntPtr r);
+        public unsafe delegate uint CreateShaderResourceViewDelegate(IntPtr @this,
+            IntPtr resource, int* desc, out IntPtr r);
         public static readonly CreateShaderResourceViewDelegate CreateShaderResourceView =
             CalliGenerator.GetCalliDelegate<CreateShaderResourceViewDelegate>(7);
         
-        public delegate uint CreateDepthStencilViewDelegate(IntPtr @this,
-            IntPtr resource, IntPtr desc, out IntPtr r);
+        public unsafe delegate uint CreateDepthStencilViewDelegate(IntPtr @this,
+            IntPtr resource, int* desc, out IntPtr r);
         public static readonly CreateDepthStencilViewDelegate CreateDepthStencilView =
             CalliGenerator.GetCalliDelegate<CreateDepthStencilViewDelegate>(10);
         
