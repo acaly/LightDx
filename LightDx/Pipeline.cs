@@ -343,6 +343,14 @@ namespace LightDx
             {
                 ApplyVSConstantBuffer(vsK.Key, vsK.Value);
             }
+            foreach (var gsK in _gsConstants)
+            {
+                ApplyGSConstantBuffer(gsK.Key, gsK.Value);
+            }
+            foreach (var psK in _psConstants)
+            {
+                ApplyPSConstantBuffer(psK.Key, psK.Value);
+            }
             foreach (var res in _resources)
             {
                 ApplyPSResource(res.Key, res.Value);
