@@ -23,10 +23,7 @@ namespace DrawString
 
             using (var device = LightDevice.Create(form))
             {
-                var targetObj = device.GetDefaultTarget();
-                targetObj.ClearColor = Color.White.WithAlpha(1);
-
-                var target = new RenderTargetList(targetObj);
+                var target = new RenderTargetList(device.GetDefaultTarget(Color.White.WithAlpha(1)));
                 target.Apply();
 
                 var sprite = new Sprite(device);

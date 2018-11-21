@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -120,7 +121,7 @@ namespace LightDx
             {
                 throw new ObjectDisposedException("Pipeline");
             }
-            var layoutDecl = VertexDataProcessor<T>.CreateLayoutFromType();
+            var layoutDecl = VertexDataProcessor<T>.CreateLayoutFromType(0);
             using (var layout = new ComScopeGuard())
             {
                 fixed (InputElementDescription* d = layoutDecl)
@@ -129,6 +130,37 @@ namespace LightDx
                         Blob.GetBufferPointer(_signatureBlob), Blob.GetBufferSize(_signatureBlob), out layout.Ptr).Check();
                 }
                 return new VertexDataProcessor<T>(_device, layout.Move());
+            }
+        }
+
+        public unsafe VertexDataProcessorGroup CreateVertexDataProcessors(Type[] types)
+        {
+            if (_disposed)
+            {
+                throw new ObjectDisposedException("Pipeline");
+            }
+            var desc = Enumerable.Empty<InputElementDescription>();
+            var processors = new object[types.Length];
+            var deviceTypeList = new[] { typeof(LightDevice) };
+            var deviceObject = new object[] { _device };
+            for (int i = 0; i < types.Length; ++i)
+            {
+                desc = desc.Concat(InputElementDescriptionFactory.Create(types[i], i));
+                var processorType = typeof(VertexDataProcessor<>).MakeGenericType(types[i]);
+                var ctor = processorType.GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic,
+                    null, deviceTypeList, null);
+                processors[i] = ctor.Invoke(deviceObject);
+            }
+            var list = desc.ToArray();
+
+            using (var layout = new ComScopeGuard())
+            {
+                fixed (InputElementDescription* d = list)
+                {
+                    Device.CreateInputLayout(_device.DevicePtr, d, (uint)list.Length,
+                        Blob.GetBufferPointer(_signatureBlob), Blob.GetBufferSize(_signatureBlob), out layout.Ptr).Check();
+                }
+                return new VertexDataProcessorGroup(_device, types, processors, layout.Move());
             }
         }
 

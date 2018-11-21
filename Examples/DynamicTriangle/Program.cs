@@ -15,10 +15,13 @@ namespace DynamicTriangle
 {
     static class Program
     {
-        private struct Vertex
+        private struct VertexP
         {
             [Position]
             public Vector4 Position;
+        }
+        private struct VertexC
+        {
             [Color]
             public Vector4 Color;
         }
@@ -53,14 +56,25 @@ namespace DynamicTriangle
                     ShaderSource.FromResource("Shader.fx", ShaderType.Vertex | ShaderType.Pixel));
                 pipeline.Apply();
 
-                var vertexData = new[] {
-                    new Vertex { Position = new Vector4(0, 0, 0.5f, 1), Color = Color.Green.WithAlpha(1) },
-                    new Vertex { Position = new Vector4(0, 0, 0.5f, 1), Color = Color.Red.WithAlpha(1) },
-                    new Vertex { Position = new Vector4(0, 0, 0.5f, 1), Color = Color.Blue.WithAlpha(1) },
+                var inputGroup = pipeline.CreateVertexDataProcessors(new[] {
+                    typeof(VertexP),
+                    typeof(VertexC),
+                });
+                var input1 = inputGroup.GetVertexDataProcessor<VertexP>();
+                var input2 = inputGroup.GetVertexDataProcessor<VertexC>();
+                
+                var buffer1 = input1.CreateDynamicBuffer(3);
+                var vertexPosData = new[] {
+                    new VertexP { Position = new Vector4(0, 0, 0.5f, 1) },
+                    new VertexP { Position = new Vector4(0, 0, 0.5f, 1) },
+                    new VertexP { Position = new Vector4(0, 0, 0.5f, 1) },
                 };
-
-                var input = pipeline.CreateVertexDataProcessor<Vertex>();
-                var buffer = input.CreateDynamicBuffer(3);
+                var buffer2 = input2.CreateImmutableBuffer(new[] {
+                    new VertexC { Color = Color.Green.WithAlpha(1) },
+                    new VertexC { Color = Color.Red.WithAlpha(1) },
+                    new VertexC { Color = Color.Blue.WithAlpha(1) },
+                });
+                var bufferGroup = new[] { buffer1, buffer2 };
 
                 var indexBuffer = pipeline.CreateImmutableIndexBuffer(new uint[] { 0, 1, 2 });
 
@@ -81,10 +95,10 @@ namespace DynamicTriangle
                     var angle = -clock.Elapsed.TotalSeconds * Math.PI / 3;
                     var distance = Math.PI * 2 / 3;
 
-                    SetCoordinate(device, ref vertexData[0].Position, angle);
-                    SetCoordinate(device, ref vertexData[1].Position, angle - distance);
-                    SetCoordinate(device, ref vertexData[2].Position, angle + distance);
-                    buffer.Update(vertexData);
+                    SetCoordinate(device, ref vertexPosData[0].Position, angle);
+                    SetCoordinate(device, ref vertexPosData[1].Position, angle - distance);
+                    SetCoordinate(device, ref vertexPosData[2].Position, angle + distance);
+                    buffer1.Update(vertexPosData);
 
                     constantBuffer.Value.Time = ((float)clock.Elapsed.TotalSeconds % 2) / 2;
 
@@ -98,7 +112,8 @@ namespace DynamicTriangle
                     constantBuffer.Update();
 
                     target.ClearAll();
-                    indexBuffer.DrawAll(buffer);
+                    indexBuffer.DrawAll(inputGroup, bufferGroup);
+                    System.Threading.Thread.Sleep(14);
                     device.Present(true);
                 });
             }

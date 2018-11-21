@@ -89,5 +89,18 @@ namespace LightDx
             vertex.Bind();
             DeviceContext.DrawIndexed(_device.ContextPtr, (uint)indexCount, (uint)startIndex, 0);
         }
+
+        public void DrawAll(VertexDataProcessorGroup group, VertexBuffer[] vertex)
+        {
+            Draw(group, vertex, 0, _size);
+        }
+
+        public void Draw(VertexDataProcessorGroup group, VertexBuffer[] vertex,
+            int startIndex, int indexCount)
+        {
+            Bind();
+            group.Bind(vertex);
+            DeviceContext.DrawIndexed(_device.ContextPtr, (uint)indexCount, (uint)startIndex, 0);
+        }
     }
 }

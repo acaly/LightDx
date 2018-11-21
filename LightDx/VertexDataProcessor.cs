@@ -16,6 +16,56 @@ namespace LightDx
         void UpdateBuffer(VertexBuffer buffer, Array data, int start, int length);
     }
 
+    internal class InputElementDescriptionFactory
+    {
+        public static InputElementDescription[] Create(Type t, int slot)
+        {
+            List<InputElementDescription> fieldList = new List<InputElementDescription>();
+            foreach (var field in t.GetFields())
+            {
+                var attr = field.GetCustomAttribute<InputAttribute>();
+                if (attr == null) continue;
+                int offset = Marshal.OffsetOf(t, field.Name).ToInt32();
+                int format;
+                if (field.FieldType == typeof(float))
+                {
+                    format = 41; //DXGI_FORMAT_R32_FLOAT
+                }
+                else if (field.FieldType == typeof(Vector4))
+                {
+                    format = 2; //R32G32B32A32_Float
+                }
+                else if (field.FieldType == typeof(Vector3))
+                {
+                    format = 6; //DXGI_FORMAT_R32G32B32_FLOAT
+                }
+                else if (field.FieldType == typeof(Vector2))
+                {
+                    format = 16; //DXGI_FORMAT_R32G32_FLOAT
+                }
+                else if (field.FieldType == typeof(uint))
+                {
+                    format = 28; //DXGI_FORMAT_R8G8B8A8_UNORM
+                }
+                else
+                {
+                    throw new ArgumentException("Unknown input field type: " + field.FieldType.Name);
+                }
+                fieldList.Add(new InputElementDescription
+                {
+                    SemanticName = attr.SemanticName,
+                    SemanticIndex = attr.SemanticIndex,
+                    Format = format,
+                    AlignedByteOffset = offset,
+                    Slot = slot,
+                });
+            }
+            fieldList.Sort((InputElementDescription a, InputElementDescription b) =>
+                a.AlignedByteOffset.CompareTo(b.AlignedByteOffset));
+            return fieldList.ToArray();
+        }
+    }
+
     public sealed class VertexDataProcessor<T> : IDisposable
         where T : unmanaged
     {
@@ -76,6 +126,11 @@ namespace LightDx
             _bufferUpdate = new BufferUpdate(device);
         }
 
+        internal VertexDataProcessor(LightDevice device)
+            : this(device, IntPtr.Zero)
+        {
+        }
+
         ~VertexDataProcessor()
         {
             Dispose(false);
@@ -132,51 +187,9 @@ namespace LightDx
             }
         }
 
-        internal static InputElementDescription[] CreateLayoutFromType()
+        internal static InputElementDescription[] CreateLayoutFromType(int slot)
         {
-            var type = typeof(T);
-            List<InputElementDescription> fieldList = new List<InputElementDescription>();
-            foreach (var field in type.GetFields())
-            {
-                var attr = field.GetCustomAttribute<InputAttribute>();
-                if (attr == null) continue;
-                int offset = Marshal.OffsetOf(type, field.Name).ToInt32();
-                int format;
-                if (field.FieldType == typeof(float))
-                {
-                    format = 41; //DXGI_FORMAT_R32_FLOAT
-                }
-                else if (field.FieldType == typeof(Vector4))
-                {
-                    format = 2; //R32G32B32A32_Float
-                }
-                else if (field.FieldType == typeof(Vector3))
-                {
-                    format = 6; //DXGI_FORMAT_R32G32B32_FLOAT
-                }
-                else if (field.FieldType == typeof(Vector2))
-                {
-                    format = 16; //DXGI_FORMAT_R32G32_FLOAT
-                }
-                else if (field.FieldType == typeof(uint))
-                {
-                    format = 28; //DXGI_FORMAT_R8G8B8A8_UNORM
-                }
-                else
-                {
-                    throw new ArgumentException("Unknown input field type: " + field.FieldType.Name);
-                }
-                fieldList.Add(new InputElementDescription
-                {
-                    SemanticName = attr.SemanticName,
-                    SemanticIndex = attr.SemanticIndex,
-                    Format = format,
-                    AlignedByteOffset = offset,
-                });
-            }
-            fieldList.Sort((InputElementDescription a, InputElementDescription b) =>
-                a.AlignedByteOffset.CompareTo(b.AlignedByteOffset));
-            return fieldList.ToArray();
+            return InputElementDescriptionFactory.Create(typeof(T), slot);
         }
 
         private void Dispose(bool disposing)

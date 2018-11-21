@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
@@ -250,7 +251,13 @@ namespace LightDx
 
                     //get DXGI.Output
                     {
-                        Adapter.EnumOutputs(adapter.Ptr, 0, out var output).Check();
+                        var i = Adapter.EnumOutputs(adapter.Ptr, 0, out var output);
+                        //Sometimes this can fail, but it should not affect our other functions.
+                        //TODO Actually we should think of supporting multiple outputs.
+                        if (i != 0x887A0002)
+                        {
+                            i.Check();
+                        }
                         ret._output = output;
                     }
 
@@ -314,6 +321,12 @@ namespace LightDx
 
         public RenderTargetObject GetDefaultTarget()
         {
+            return _defaultRenderTarget;
+        }
+
+        public RenderTargetObject GetDefaultTarget(Vector4 color)
+        {
+            _defaultRenderTarget.ClearColor = color;
             return _defaultRenderTarget;
         }
 
@@ -514,7 +527,7 @@ namespace LightDx
 
         public void Present(bool vsync = false)
         {
-            if (vsync)
+            if (vsync && _output != IntPtr.Zero)
             {
                 Output.WaitForVerticalBlank(_output);
             }

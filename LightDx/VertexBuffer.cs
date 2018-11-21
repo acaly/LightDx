@@ -22,6 +22,9 @@ namespace LightDx
         private bool _disposed;
 
         internal bool IsDynamic => _isDynamic;
+        internal uint Stride => _stride;
+        internal IntPtr BufferPtr => _buffer;
+        internal int VertexCount => _vertexCount;
 
         internal VertexBuffer(LightDevice device, IBufferUpdate update, IntPtr buffer, IntPtr layout,
             int stride, int vertexCount, bool isDynamic)
@@ -88,7 +91,5 @@ namespace LightDx
             Bind();
             DeviceContext.Draw(_device.ContextPtr, (uint)vertexCount, (uint)vertexOffset);
         }
-
-        internal IntPtr BufferPtr => _buffer;
     }
 }
