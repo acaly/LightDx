@@ -45,8 +45,14 @@ Nuget package ```LightDx``` is available now. (Only .NET Framework 4.7 is suppor
 
 Please check the following projects that uses LightDx:
 * [Examples](Examples) folder.
-* [DirectX 11 Tutorial](https://github.com/acaly/LightDx.DirectX11Tutorials).
-* [ImGuiOnLightDx](https://github.com/acaly/ImGuiOnLightDx).
+* [DirectX 11 Tutorial](https://github.com/acaly/LightDx.DirectX11Tutorials), implementing 
+some of the examples from http://rastertek.com/tutdx11.html.
+* [ImGuiOnLightDx](https://github.com/acaly/ImGuiOnLightDx), a simple implementation of 
+the ImGui backend.
+* [MMDRenderer](https://github.com/acaly/MMDRenderer), a simple MMD model renderer using 
+deferred rendering pipeline.
+* [Sandbox](https://github.com/acaly/Sandbox), a high-performance Minecraft-like world 
+rendering engine.
 
 # TODO List
 More pipeline units:
