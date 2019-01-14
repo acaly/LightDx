@@ -113,7 +113,7 @@ namespace DynamicTriangle
 
                     target.ClearAll();
                     indexBuffer.DrawAll(inputGroup, bufferGroup);
-                    System.Threading.Thread.Sleep(14);
+
                     device.Present(true);
                 });
             }
