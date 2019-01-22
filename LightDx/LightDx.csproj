@@ -80,6 +80,7 @@
     <Compile Include="DepthTest.cs" />
     <Compile Include="MatrixHelper.cs" />
     <Compile Include="RenderTargetObject.cs" />
+    <Compile Include="ShaderResourceBuffer.cs" />
     <Compile Include="Vectors.cs" />
     <Compile Include="FrameCounter.cs" />
     <Compile Include="IndexBuffer.cs" />

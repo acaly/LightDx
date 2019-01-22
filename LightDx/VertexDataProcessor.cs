@@ -18,6 +18,30 @@ namespace LightDx
 
     internal class InputElementDescriptionFactory
     {
+        public static int GetFormatFromType(Type t)
+        {
+            if (t == typeof(float))
+            {
+                return 41; //DXGI_FORMAT_R32_FLOAT
+            }
+            else if (t == typeof(Vector4))
+            {
+                return 2; //R32G32B32A32_Float
+            }
+            else if (t == typeof(Vector3))
+            {
+                return 6; //DXGI_FORMAT_R32G32B32_FLOAT
+            }
+            else if (t == typeof(Vector2))
+            {
+                return 16; //DXGI_FORMAT_R32G32_FLOAT
+            }
+            else if (t == typeof(uint))
+            {
+                return 28; //DXGI_FORMAT_R8G8B8A8_UNORM
+            }
+            return 0;
+        }
         public static InputElementDescription[] Create(Type t, int slot)
         {
             List<InputElementDescription> fieldList = new List<InputElementDescription>();
@@ -26,30 +50,14 @@ namespace LightDx
                 var attr = field.GetCustomAttribute<InputAttribute>();
                 if (attr == null) continue;
                 int offset = Marshal.OffsetOf(t, field.Name).ToInt32();
-                int format;
-                if (field.FieldType == typeof(float))
+                int format = attr.Format;
+                if (format == 0)
                 {
-                    format = 41; //DXGI_FORMAT_R32_FLOAT
-                }
-                else if (field.FieldType == typeof(Vector4))
-                {
-                    format = 2; //R32G32B32A32_Float
-                }
-                else if (field.FieldType == typeof(Vector3))
-                {
-                    format = 6; //DXGI_FORMAT_R32G32B32_FLOAT
-                }
-                else if (field.FieldType == typeof(Vector2))
-                {
-                    format = 16; //DXGI_FORMAT_R32G32_FLOAT
-                }
-                else if (field.FieldType == typeof(uint))
-                {
-                    format = 28; //DXGI_FORMAT_R8G8B8A8_UNORM
-                }
-                else
-                {
-                    throw new ArgumentException("Unknown input field type: " + field.FieldType.Name);
+                    format = GetFormatFromType(field.FieldType);
+                    if (format == 0)
+                    {
+                        throw new ArgumentException("Unknown input field type: " + field.FieldType.Name);
+                    }
                 }
                 fieldList.Add(new InputElementDescription
                 {

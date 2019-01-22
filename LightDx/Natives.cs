@@ -338,11 +338,15 @@ namespace LightDx.Natives
         public static readonly DrawIndexedDelegate DrawIndexed =
             CalliGenerator.GetCalliDelegate<DrawIndexedDelegate>(12);
 
-        public delegate void PSSetShaderResourcesDelegate(IntPtr @this,
+        public delegate void SetShaderResourcesDelegate(IntPtr @this,
             uint slot, uint num, ref IntPtr view);
-        public static readonly PSSetShaderResourcesDelegate PSSetShaderResources =
-            CalliGenerator.GetCalliDelegate<PSSetShaderResourcesDelegate>(8);
-        
+        public static readonly SetShaderResourcesDelegate VSSetShaderResources =
+            CalliGenerator.GetCalliDelegate<SetShaderResourcesDelegate>(25);
+        public static readonly SetShaderResourcesDelegate GSSetShaderResources =
+            CalliGenerator.GetCalliDelegate<SetShaderResourcesDelegate>(31);
+        public static readonly SetShaderResourcesDelegate PSSetShaderResources =
+            CalliGenerator.GetCalliDelegate<SetShaderResourcesDelegate>(8);
+
         public delegate uint ClearDepthStencilViewDelegate(IntPtr @this,
             IntPtr view, uint flags, float depth, byte stencil);
         public static readonly ClearDepthStencilViewDelegate ClearDepthStencilView =

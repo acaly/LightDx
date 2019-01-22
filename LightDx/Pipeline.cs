@@ -42,6 +42,9 @@ namespace LightDx
         private Dictionary<int, AbstractConstantBuffer> _gsConstants = new Dictionary<int, AbstractConstantBuffer>();
         private Dictionary<int, AbstractConstantBuffer> _psConstants = new Dictionary<int, AbstractConstantBuffer>();
         private Dictionary<int, Texture2D> _resources = new Dictionary<int, Texture2D>();
+        private Dictionary<int, AbstractShaderResourceBuffer> _vsBuffers = new Dictionary<int, AbstractShaderResourceBuffer>();
+        private Dictionary<int, AbstractShaderResourceBuffer> _gsBuffers = new Dictionary<int, AbstractShaderResourceBuffer>();
+        private Dictionary<int, AbstractShaderResourceBuffer> _psBuffers = new Dictionary<int, AbstractShaderResourceBuffer>();
 
         private bool _isBound;
 
@@ -189,10 +192,10 @@ namespace LightDx
                     RowPitch = 0,
                     SlicePitch = 0,
                 };
-                using (var vb = new ComScopeGuard())
+                using (var ib = new ComScopeGuard())
                 {
-                    Device.CreateBuffer(_device.DevicePtr, &bd, &box, out vb.Ptr).Check();
-                    return new IndexBuffer(_device, vb.Move(), indexSize * 8, realLength);
+                    Device.CreateBuffer(_device.DevicePtr, &bd, &box, out ib.Ptr).Check();
+                    return new IndexBuffer(_device, ib.Move(), indexSize * 8, realLength);
                 }
             }
         }
@@ -212,10 +215,10 @@ namespace LightDx
                 MiscFlags = 0,
                 StructureByteStride = (uint)bitWidth / 8,
             };
-            using (var vb = new ComScopeGuard())
+            using (var ib = new ComScopeGuard())
             {
-                Device.CreateBuffer(_device.DevicePtr, &bd, null, out vb.Ptr).Check();
-                return new IndexBuffer(_device, vb.Move(), bitWidth, size);
+                Device.CreateBuffer(_device.DevicePtr, &bd, null, out ib.Ptr).Check();
+                return new IndexBuffer(_device, ib.Move(), bitWidth, size);
             }
         }
 
@@ -243,6 +246,46 @@ namespace LightDx
             }
         }
 
+        public unsafe ShaderResourceBuffer<T> CreateShaderResourceBuffer<T>(T[] data, bool isStructured) where T : unmanaged
+        {
+            var elementSize = Marshal.SizeOf<T>();
+            BufferDescription bd = new BufferDescription()
+            {
+                ByteWidth = (uint)(elementSize * data.Length),
+                Usage = 1, //immutable
+                BindFlags = 8, //shader resource
+                CPUAccessFlags = 0, //none
+                MiscFlags = isStructured ? 64u : 0u, //D3D11_RESOURCE_MISC_BUFFER_STRUCTURED
+                StructureByteStride = (uint)elementSize,
+            };
+            using (var buffer = new ComScopeGuard())
+            {
+                fixed (T* pData = &data[0])
+                {
+                    DataBox box = new DataBox
+                    {
+                        DataPointer = pData,
+                        RowPitch = 0,
+                        SlicePitch = 0,
+                    };
+                    Device.CreateBuffer(_device.DevicePtr, &bd, &box, out buffer.Ptr).Check();
+                }
+                using (var view = new ComScopeGuard())
+                {
+                    int* viewDesc = stackalloc int[5]
+                    {
+                        isStructured ? 0 : InputElementDescriptionFactory.GetFormatFromType(typeof(T)),
+                        isStructured ? 11 : 1, //D3D_SRV_DIMENSION_BUFFEREX or D3D_SRV_DIMENSION_BUFFER
+                        0, //FirstElement = 0
+                        data.Length, //NumElements
+                        0, //Not used
+                    };
+                    Device.CreateShaderResourceView(_device.DevicePtr, buffer.Ptr, viewDesc, out view.Ptr).Check();
+                    return new ShaderResourceBuffer<T>(_device, buffer.Move(), view.Move());
+                }
+            }
+        }
+
         public void SetBlender(Blender b)
         {
             NativeHelper.Dispose(ref _blendPtr);
@@ -266,10 +309,43 @@ namespace LightDx
         public void SetResource(int slot, Texture2D tex)
         {
             _resources[slot] = tex;
+            _psBuffers.Remove(slot);
             if (_isBound)
             {
                 var view = tex?.ViewPtr ?? IntPtr.Zero;
                 DeviceContext.PSSetShaderResources(_device.ContextPtr, (uint)slot, 1, ref view);
+            }
+        }
+
+        public void SetResource(ShaderType usage, int slot, AbstractShaderResourceBuffer buffer)
+        {
+            if (usage.HasFlag(ShaderType.Vertex))
+            {
+                _vsBuffers[slot] = buffer;
+                if (_isBound)
+                {
+                    var view = buffer?.ViewPtr ?? IntPtr.Zero;
+                    DeviceContext.VSSetShaderResources(_device.ContextPtr, (uint)slot, 1, ref view);
+                }
+            }
+            if (usage.HasFlag(ShaderType.Geometry))
+            {
+                _gsBuffers[slot] = buffer;
+                if (_isBound)
+                {
+                    var view = buffer?.ViewPtr ?? IntPtr.Zero;
+                    DeviceContext.GSSetShaderResources(_device.ContextPtr, (uint)slot, 1, ref view);
+                }
+            }
+            if (usage.HasFlag(ShaderType.Pixel))
+            {
+                _resources.Remove(slot);
+                _psBuffers[slot] = buffer;
+                if (_isBound)
+                {
+                    var view = buffer?.ViewPtr ?? IntPtr.Zero;
+                    DeviceContext.PSSetShaderResources(_device.ContextPtr, (uint)slot, 1, ref view);
+                }
             }
         }
 
@@ -320,6 +396,24 @@ namespace LightDx
         private void ApplyBlender()
         {
             DeviceContext.OMSetBlendState(_device.ContextPtr, _blendPtr, IntPtr.Zero, 0xFFFFFFFF);
+        }
+
+        private void ApplyVSResource(int slot, AbstractShaderResourceBuffer buffer)
+        {
+            IntPtr view = buffer?.ViewPtr ?? IntPtr.Zero;
+            DeviceContext.VSSetShaderResources(_device.ContextPtr, (uint)slot, 1, ref view);
+        }
+
+        private void ApplyGSResource(int slot, AbstractShaderResourceBuffer buffer)
+        {
+            IntPtr view = buffer?.ViewPtr ?? IntPtr.Zero;
+            DeviceContext.GSSetShaderResources(_device.ContextPtr, (uint)slot, 1, ref view);
+        }
+
+        private void ApplyPSResource(int slot, AbstractShaderResourceBuffer buffer)
+        {
+            IntPtr view = buffer?.ViewPtr ?? IntPtr.Zero;
+            DeviceContext.PSSetShaderResources(_device.ContextPtr, (uint)slot, 1, ref view);
         }
 
         private void ApplyPSResource(int slot, Texture2D tex)
@@ -384,6 +478,18 @@ namespace LightDx
                 ApplyPSConstantBuffer(psK.Key, psK.Value);
             }
             foreach (var res in _resources)
+            {
+                ApplyPSResource(res.Key, res.Value);
+            }
+            foreach (var res in _vsBuffers)
+            {
+                ApplyVSResource(res.Key, res.Value);
+            }
+            foreach (var res in _gsBuffers)
+            {
+                ApplyGSResource(res.Key, res.Value);
+            }
+            foreach (var res in _psBuffers)
             {
                 ApplyPSResource(res.Key, res.Value);
             }

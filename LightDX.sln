@@ -22,6 +22,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Weavers", "Weavers\Weavers.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cube", "Cube\Cube.csproj", "{E900F23B-CA00-4FB1-8FF5-7C50F828F763}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BufferResource", "BufferResource\BufferResource.csproj", "{87B6F1BD-BAB3-4CB0-B18F-218362D6A712}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -86,6 +88,14 @@ Global
 		{E900F23B-CA00-4FB1-8FF5-7C50F828F763}.Release|Any CPU.Build.0 = Release|Any CPU
 		{E900F23B-CA00-4FB1-8FF5-7C50F828F763}.Release|x64.ActiveCfg = Release|Any CPU
 		{E900F23B-CA00-4FB1-8FF5-7C50F828F763}.Release|x64.Build.0 = Release|Any CPU
+		{87B6F1BD-BAB3-4CB0-B18F-218362D6A712}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{87B6F1BD-BAB3-4CB0-B18F-218362D6A712}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{87B6F1BD-BAB3-4CB0-B18F-218362D6A712}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{87B6F1BD-BAB3-4CB0-B18F-218362D6A712}.Debug|x64.Build.0 = Debug|Any CPU
+		{87B6F1BD-BAB3-4CB0-B18F-218362D6A712}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{87B6F1BD-BAB3-4CB0-B18F-218362D6A712}.Release|Any CPU.Build.0 = Release|Any CPU
+		{87B6F1BD-BAB3-4CB0-B18F-218362D6A712}.Release|x64.ActiveCfg = Release|Any CPU
+		{87B6F1BD-BAB3-4CB0-B18F-218362D6A712}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -96,6 +106,7 @@ Global
 		{FE9BD09A-74E5-4ED8-BD61-1A9F128E5DA0} = {8A9515FE-6CCF-4B80-9A37-87C2C3583424}
 		{D0E73992-784B-4F38-9198-4E08A7BAF8AE} = {8A9515FE-6CCF-4B80-9A37-87C2C3583424}
 		{E900F23B-CA00-4FB1-8FF5-7C50F828F763} = {8A9515FE-6CCF-4B80-9A37-87C2C3583424}
+		{87B6F1BD-BAB3-4CB0-B18F-218362D6A712} = {8A9515FE-6CCF-4B80-9A37-87C2C3583424}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {7448F4E7-EE62-47E7-92EA-7833EE840AA1}

@@ -12,6 +12,8 @@ namespace LightDx.InputAttributes
         internal abstract IntPtr SemanticName { get; }
         internal int SemanticIndex { get; set; }
 
+        public int Format { get; set; }
+
         internal static readonly IntPtr POSITION = Marshal.StringToHGlobalAnsi("POSITION");
         internal static readonly IntPtr COLOR = Marshal.StringToHGlobalAnsi("COLOR");
         internal static readonly IntPtr TEXCOORD = Marshal.StringToHGlobalAnsi("TEXCOORD");

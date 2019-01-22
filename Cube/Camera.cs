@@ -33,39 +33,6 @@ namespace Cube
             return new Vector3(offset.X, offset.Y, offset.Z);
         }
 
-        public Matrix4x4 GetViewMatrix()
-        {
-            return CreateLookAt(Position, Position + CalcOffset(), Vector3.UnitZ).Transpose();
-            //* Matrix4x4.CreateScale(1, -1, 1);
-        }
-
-        public static Matrix4x4 CreateLookAt(Vector3 pos, Vector3 lookAt, Vector3 up)
-        {
-            var zaxis = Vector3.Normalize(lookAt - pos);
-            var xaxis = Vector3.Normalize(Vector3.Cross(up, zaxis));
-            var yaxis = Vector3.Cross(zaxis, xaxis);
-
-            return new Matrix4x4
-            {
-                M11 = xaxis.X,
-                M21 = xaxis.Y,
-                M31 = xaxis.Z,
-
-                M12 = yaxis.X,
-                M22 = yaxis.Y,
-                M32 = yaxis.Z,
-
-                M13 = zaxis.X,
-                M23 = zaxis.Y,
-                M33 = zaxis.Z,
-
-                M41 = Vector3.Dot(xaxis, pos) * -1f,
-                M42 = Vector3.Dot(yaxis, pos) * -1f,
-                M43 = Vector3.Dot(zaxis, pos) * -1f,
-                M44 = 1
-            };
-        }
-
         public Vector3 MoveHorizontal(Vector4 b)
         {
             Vector4 move = b;
