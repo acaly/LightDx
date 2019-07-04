@@ -53,6 +53,8 @@ the ImGui backend.
 deferred rendering pipeline.
 * [Sandbox](https://github.com/acaly/Sandbox), a high-performance Minecraft-like world 
 rendering engine.
+* [VoxelModelEditor](https://github.com/acaly/VoxelModelEditor), a model and animation 
+editor using WinForms.
 
 # TODO List
 More pipeline units:
