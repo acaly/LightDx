@@ -1,4 +1,4 @@
-# LightDX (WIP)
+# LightDX
 [![NuGet](https://img.shields.io/nuget/v/LightDx.svg)](https://www.nuget.org/packages/LightDx/)
 
 LightDX is a graphics library in C#. It is designed to be used for those who want
@@ -56,14 +56,14 @@ rendering engine.
 * [VoxelModelEditor](https://github.com/acaly/VoxelModelEditor), a model and animation 
 editor using WinForms.
 
-# TODO List
-More pipeline units:
-* Sampler.
-* Rasterizer.
+### About Cube example
 
-Others:
-* Minimal stencil support (low priority).
-* Better support for pixel formats (low priority).
+* It's outside the examples folder by mistake.
+* The `Camera` class should have a `GetViewMatrix` method:
 
-If you want to use features that LightDx does not support yet, feel free to tell
-me by opening an issue!
+```c#
+    public Matrix4x4 GetViewMatrix()
+    {
+        return MatrixHelper.CreateLookAt(Position, Position + CalcOffset(), Vector3.UnitZ).Transpose();
+    }
+```
